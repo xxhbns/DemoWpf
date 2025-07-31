@@ -35,6 +35,11 @@ namespace WpfPrism
         {
             ///注入
             containerRegistry.RegisterDialog<LoginUC, LoginUCViewModel>();
+            containerRegistry.RegisterDialog<MainWindow, MainWindowViewModel>();
+            containerRegistry.RegisterDialog<HomeUC, HomeUCViewModel>();
+            containerRegistry.RegisterDialog<ToDoUC, ToDoUCViewModel>();
+            containerRegistry.RegisterDialog<MemoUC, MemoUCViewModel>();
+            containerRegistry.RegisterDialog<SettingsUC, SettingsUCViewModel>();
 
             //请求
             containerRegistry.GetContainer().Register<HttpRestClient>(made: Parameters.Of.Type<string>(serviceKey: "webUrl"));
@@ -46,15 +51,15 @@ namespace WpfPrism
         /// </summary>
         protected override void OnInitialized()
         {
-            var dialog = Container.Resolve<IDialogService>();
-            dialog.ShowDialog("LoginUC", callback =>
-            {
-                if (callback.Result != ButtonResult.OK)
-                {
-                    Environment.Exit(0);
-                    return;
-                }
-            });
+            //var dialog = Container.Resolve<IDialogService>();
+            //dialog.ShowDialog("LoginUC", callback =>
+            //{
+            //    if (callback.Result != ButtonResult.OK)
+            //    {
+            //        Environment.Exit(0);
+            //        return;
+            //    }
+            //});
             base.OnInitialized();
         }
 

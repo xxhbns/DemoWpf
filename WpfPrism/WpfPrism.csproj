@@ -10,6 +10,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Images\111.jpg" />
+    <None Remove="Images\Fonts\iconfont.ttf" />
     <None Remove="Images\logo.png" />
   </ItemGroup>
 
@@ -29,6 +31,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="Images\111.jpg" />
+    <Resource Include="Images\Fonts\iconfont.ttf" />
     <Resource Include="Images\logo.png" />
   </ItemGroup>
 
