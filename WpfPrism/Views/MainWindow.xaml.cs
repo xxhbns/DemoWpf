@@ -20,5 +20,6 @@ namespace WpfPrism
         {
             InitializeComponent();
         }
+
     }
 }
