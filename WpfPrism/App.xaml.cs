@@ -27,8 +27,21 @@ namespace WpfPrism
         }
 
         /// <summary>
-        /// 注入服务
+        /// 注入服务 <see cref="IContainerRegistry"/> <see langword="bool"/>
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// 注入服务是指在应用程序启动时，将需要的服务或组件注册到依赖注入容器中，以便在应用程序的其他部分可以使用这些服务。
+        /// </para>
+        /// </remarks>
+        /// <example>
+        /// Csharp用法
+        /// <code language="csharp">
+        /// <![CDATA[
+        /// containerRegistry.RegisterDialog<T, TViewModel>();
+        /// ]]>
+        /// </code>
+        /// </example>
         /// <param name="containerRegistry"></param>
         /// <exception cref="NotImplementedException"></exception>
         protected override void RegisterTypes(IContainerRegistry containerRegistry)
@@ -36,10 +49,15 @@ namespace WpfPrism
             ///注入
             containerRegistry.RegisterDialog<LoginUC, LoginUCViewModel>();
             containerRegistry.RegisterDialog<MainWindow, MainWindowViewModel>();
-            containerRegistry.RegisterDialog<HomeUC, HomeUCViewModel>();
-            containerRegistry.RegisterDialog<ToDoUC, ToDoUCViewModel>();
-            containerRegistry.RegisterDialog<MemoUC, MemoUCViewModel>();
-            containerRegistry.RegisterDialog<SettingsUC, SettingsUCViewModel>();
+
+            containerRegistry.RegisterForNavigation<HomeUC, HomeUCViewModel>();
+            containerRegistry.RegisterForNavigation<ToDoUC, ToDoUCViewModel>();
+            containerRegistry.RegisterForNavigation<MemoUC, MemoUCViewModel>();
+            containerRegistry.RegisterForNavigation<SettingsUC, SettingsUCViewModel>();
+
+            containerRegistry.RegisterForNavigation<PersonalUC, PersonalUCViewModel>();
+            containerRegistry.RegisterForNavigation<SysSetUC>();
+            containerRegistry.RegisterForNavigation<AboutUC>();
 
             //请求
             containerRegistry.GetContainer().Register<HttpRestClient>(made: Parameters.Of.Type<string>(serviceKey: "webUrl"));
@@ -51,15 +69,26 @@ namespace WpfPrism
         /// </summary>
         protected override void OnInitialized()
         {
-            //var dialog = Container.Resolve<IDialogService>();
-            //dialog.ShowDialog("LoginUC", callback =>
-            //{
-            //    if (callback.Result != ButtonResult.OK)
-            //    {
-            //        Environment.Exit(0);
-            //        return;
-            //    }
-            //});
+            //打开对话框
+            var dialog = Container.Resolve<IDialogService>();
+            dialog.ShowDialog("LoginUC", callback =>
+            {
+                if (callback.Result != ButtonResult.OK)
+                {
+                    Environment.Exit(0);
+                    return;
+                }
+
+                var vm = Current.MainWindow.DataContext as MainWindowViewModel;
+                if (vm != null)
+                {
+                    if (callback.Parameters.TryGetValue<string>("LoginName", out var name))
+                    {
+                        vm.NavigateDefaultCommand.Execute(name);
+                    }
+                }
+            });
+
             base.OnInitialized();
         }
 

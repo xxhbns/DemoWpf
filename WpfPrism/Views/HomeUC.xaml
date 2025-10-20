@@ -5,8 +5,114 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:WpfPrism.Views"
              mc:Ignorable="d" 
+             xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
-        <TextBlock Text="111" FontSize="36"/>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+
+        <!-- 第一行 -->
+        <TextBlock Text="{Binding LoginInfo}" Grid.Row="0" FontSize="22" Margin="15,10,15,5"></TextBlock>
+
+        <!-- 第二行 -->
+        <ItemsControl Grid.Row="1"  ItemsSource="{Binding StatPanelList}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <UniformGrid Columns="4"></UniformGrid>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Border x:Name="bor" Background="{Binding BackColor}" CornerRadius="5" Margin="10">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Effect">
+                                            <Setter.Value>
+                                                <DropShadowEffect Color="#dddddd" ShadowDepth="1" BlurRadius="10"/>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <Grid>
+                            <StackPanel Margin="20,10">
+                                <md:PackIcon Margin="0,0" Kind="{Binding Icon}" Height="30" Width="30"/>
+                                <TextBlock Text="{Binding ItemName}" Margin="0,10" FontSize="15"></TextBlock>
+                                <TextBlock Text="{Binding Result}" FontSize="40" FontWeight="Bold"></TextBlock>
+                            </StackPanel>
+
+                            <Canvas ClipToBounds="True">
+                                <Border Canvas.Top="10" Canvas.Right="-50" Width="120" Height="120" Background="#ffffff" CornerRadius="100" Opacity="0.1"></Border>
+                                <Border Canvas.Top="80" Canvas.Right="-30" Width="120" Height="120" Background="#ffffff" CornerRadius="100" Opacity="0.1"></Border>
+                            </Canvas>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <!-- 第三行 -->
+        <Grid Grid.Row="2" Margin="0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            
+            <!-- 第一列 -->
+            <Border CornerRadius="10" Margin="10,0" Opacity="0.1" Background="DimGray"></Border>
+            <DockPanel Margin="10,0">
+                <DockPanel Margin="10,5" LastChildFill="False" DockPanel.Dock="Top">
+                    <TextBlock FontSize="20" FontWeight="Bold">待办事项</TextBlock>
+                    <Button Width="30" Height="30" DockPanel.Dock="Right" VerticalAlignment="Top" Style="{StaticResource MaterialDesignFloatingActionAccentButton}">
+                        <md:PackIcon Kind="Add"/>
+                    </Button>
+                </DockPanel>
+
+                <ListBox ItemsSource="{Binding WaitInfoList}" HorizontalContentAlignment="Stretch" ScrollViewer.VerticalScrollBarVisibility="Hidden">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <DockPanel MaxHeight="60" LastChildFill="False">
+                                <ToggleButton DockPanel.Dock="Right"/>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="16" Foreground="Black"/>
+                                    <TextBlock Text="{Binding Content}" Opacity="0.5" Margin="0,3" Foreground="Black"/>
+                                </StackPanel>
+                            </DockPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+
+            <!-- 第二列 -->
+            <Border Grid.Column="1" CornerRadius="10" Margin="10,0" Opacity="0.1" Background="DimGray"></Border>
+            <DockPanel Grid.Column="1" Margin="10,0">
+                <DockPanel Margin="10,5" LastChildFill="False" DockPanel.Dock="Top">
+                    <TextBlock FontSize="20" FontWeight="Bold">备忘录</TextBlock>
+                    <Button Width="30" Height="30" DockPanel.Dock="Right" VerticalAlignment="Top" Style="{StaticResource MaterialDesignFloatingActionAccentButton}">
+                        <md:PackIcon Kind="Add"/>
+                    </Button>
+                </DockPanel>
+
+                <ListBox ItemsSource="{Binding MemoInfoList}" HorizontalContentAlignment="Stretch" ScrollViewer.VerticalScrollBarVisibility="Hidden">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <DockPanel MaxHeight="60" LastChildFill="False">
+                                <ToggleButton DockPanel.Dock="Right"/>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="16" Foreground="Black"/>
+                                    <TextBlock Text="{Binding Content}" Opacity="0.5" Margin="0,3" Foreground="Black"/>
+                                </StackPanel>
+                            </DockPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+        </Grid>
     </Grid>
 </UserControl>

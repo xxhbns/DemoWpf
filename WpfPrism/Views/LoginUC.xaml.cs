@@ -38,7 +38,7 @@ namespace WpfPrism.Views
         /// <summary>
         /// 订阅后执行的任务
         /// </summary>
-        /// <param name="obj"></param>
+        /// <param name="obj">接受订阅的消息</param>
         private void Sub(string obj)
         {
             RegLoginBar.MessageQueue.Enqueue(obj);

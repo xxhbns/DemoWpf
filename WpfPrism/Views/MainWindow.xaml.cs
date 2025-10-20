@@ -8,6 +8,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using WpfPrism.ViewModels;
 
 namespace WpfPrism
 {
@@ -54,6 +55,12 @@ namespace WpfPrism
         private void lbMenu_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             drawerHost.IsLeftDrawerOpen = false; // 关闭左侧抽屉
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            //var vm = this.DataContext as MainWindowViewModel;
+            //vm.NavigateDefault();
         }
     }
 }

@@ -10,16 +10,17 @@
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         mc:Ignorable="d"
+        FontFamily="微软雅黑"
+        Loaded="Window_Loaded"
         Title="MainWindow" Height="600" Width="1000">
     <WindowChrome.WindowChrome>
         <WindowChrome GlassFrameThickness="-1"/>
     </WindowChrome.WindowChrome>
     <materialDesign:DialogHost DialogTheme="Inherit"
-                                Identifier="RootDialog"
-                                SnackbarMessageQueue="{Binding ElementName=MainSnackbar, Path=MessageQueue}">
+                                Identifier="RootDialog">
 
         <materialDesign:DrawerHost IsLeftDrawerOpen="{Binding ElementName=MenuToggleButton, Path=IsChecked}" x:Name="drawerHost">
-            <!--菜单-->
+            <!--#region 菜单列表 -->
             <materialDesign:DrawerHost.LeftDrawerContent>
                 <DockPanel MinWidth="220">
                     <StackPanel DockPanel.Dock="Top" Margin="0 15">
@@ -30,12 +31,12 @@
                             </Image.Clip>
                         </Image>
                     </StackPanel>
-                    <ListBox ItemsSource="{Binding LmList}" ItemContainerStyle="{StaticResource ListMenuStyle}" x:Name="lbMenu" SelectionChanged="lbMenu_SelectionChanged">
+                    <ListBox ItemsSource="{Binding LmList}" ItemContainerStyle="{StaticResource ListMenuStyle}" SelectionChanged="lbMenu_SelectionChanged">
                         <i:Interaction.Triggers>
                             <i:EventTrigger EventName="SelectionChanged">
-                                <i:InvokeCommandAction Command="{Binding NavigateCom}" CommandParameter="{Binding ElementName=lbMenu,Path=SelectedItem}"/>
+                                <i:InvokeCommandAction Command="{Binding NavigateCommand}" CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ListBox},Path=SelectedItem}"/>
                             </i:EventTrigger>
-                        </i:Interaction.Triggers>                        
+                        </i:Interaction.Triggers>
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal" Margin="5" Background="Transparent">
@@ -47,6 +48,7 @@
                     </ListBox>
                 </DockPanel>
             </materialDesign:DrawerHost.LeftDrawerContent>
+            <!--#endregion-->
 
             <DockPanel>
                 <materialDesign:ColorZone Padding="16"
@@ -55,6 +57,7 @@
                                           Mode="PrimaryMid"
                                           MouseDoubleClick="ColorZone_MouseDoubleClick">
                     <DockPanel LastChildFill="True">
+                        <!--#region 头部菜单栏右侧 -->
                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                             <Image Source="/Images/111.jpg" Width="25" Height="25">
                                 <!--裁剪-->
@@ -66,30 +69,38 @@
                             <Button x:Name="BtnMax" Content="&#xe600;" FontFamily="../Images/Fonts/#iconfont" Style="{StaticResource MaterialDesignFlatMidBgButton}" Click="BtnMaxmd"/>
                             <Button x:Name="BtnClose" Content="&#xe656;" FontFamily="../Images/Fonts/#iconfont" Style="{StaticResource MaterialDesignFlatMidBgButton}" Click="BtnCloseCmd"/>
                         </StackPanel>
+                        <!--#endregion-->
+                        <!--#region 头部菜单栏左侧 -->
                         <StackPanel Orientation="Horizontal" Cursor="Hand">
+                            <!--#region 菜单 -->
                             <ToggleButton x:Name="MenuToggleButton"
                                             AutomationProperties.Name="HamburgerToggleButton"
                                           
                                             IsChecked="False"
                                             Style="{StaticResource MaterialDesignHamburgerToggleButton}" />
+                            <!--#endregion-->
 
+                            <!--#region 返回 -->
                             <Button Margin="24,0,0,0"
                                     materialDesign:RippleAssist.Feedback="{Binding RelativeSource={RelativeSource Self}, Path=Foreground, Converter={StaticResource BrushRoundConverter}}"
-                                    Command="{Binding BackCom}"
+                                    Command="{Binding BackCommand}"
                                     Content="{materialDesign:PackIcon Kind=ArrowLeft,
                                                                     Size=24}"
                                     Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type FrameworkElement}}, Path=(TextElement.Foreground)}"
                                     Style="{StaticResource MaterialDesignToolButton}"
                                     ToolTip="Previous Item" />
+                            <!--#endregion-->
 
+                            <!--#region 前进 -->
                             <Button Margin="16,0,0,0"
                                     materialDesign:RippleAssist.Feedback="{Binding RelativeSource={RelativeSource Self}, Path=Foreground, Converter={StaticResource BrushRoundConverter}}"
-                                    Command="{Binding ForwardCom}"
+                                    Command="{Binding ForwardCommand}"
                                     Content="{materialDesign:PackIcon Kind=ArrowRight,
                                                                     Size=24}"
                                     Foreground="{Binding RelativeSource={RelativeSource AncestorType={x:Type FrameworkElement}}, Path=(TextElement.Foreground)}"
                                     Style="{StaticResource MaterialDesignToolButton}"
                                     ToolTip="Next Item" />
+                            <!--#endregion-->
 
 
                             <TextBlock Margin="15,0,0,0"
@@ -99,6 +110,7 @@
                                    FontSize="22"
                                    Text="我的日常"/>
                         </StackPanel>
+                        <!--#endregion-->
 
                     </DockPanel>
                 </materialDesign:ColorZone>
