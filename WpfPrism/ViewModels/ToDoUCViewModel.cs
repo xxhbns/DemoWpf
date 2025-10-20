@@ -3,29 +3,49 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using Models.DTO;
 using Prism.Services.Dialogs;
 
 namespace WpfPrism.ViewModels
 {
-    public class ToDoUCViewModel : IDialogAware
+    public partial class ToDoUCViewModel : ObservableValidator
     {
-        public string Title => throw new NotImplementedException();
-
-        public event Action<IDialogResult> RequestClose;
-
-        public bool CanCloseDialog()
+        public ToDoUCViewModel()
         {
-            throw new NotImplementedException();
+            CreateWaitInfoDTOList();
         }
 
-        public void OnDialogClosed()
+        [ObservableProperty]
+        private List<WaitInfoDTO> _waitInfoDTOList;
+
+        private void CreateWaitInfoDTOList()
         {
-            throw new NotImplementedException();
+            WaitInfoDTOList = [];
+            WaitInfoDTOList.Add(new WaitInfoDTO { Title = "会议一", Content = "会议内容" });
+            WaitInfoDTOList.Add(new WaitInfoDTO { Title = "会议二", Content = "会议内容" });
+            WaitInfoDTOList.Add(new WaitInfoDTO { Title = "会议一", Content = "会议内容" });
+            WaitInfoDTOList.Add(new WaitInfoDTO { Title = "会议二", Content = "会议内容" });
+            WaitInfoDTOList.Add(new WaitInfoDTO { Title = "会议一", Content = "会议内容" });
+            WaitInfoDTOList.Add(new WaitInfoDTO { Title = "会议二", Content = "会议内容" });
+            WaitInfoDTOList.Add(new WaitInfoDTO { Title = "会议一", Content = "会议内容" });
+            WaitInfoDTOList.Add(new WaitInfoDTO { Title = "会议二", Content = "会议内容" });
+            WaitInfoDTOList.Add(new WaitInfoDTO { Title = "会议一", Content = "会议内容" });
+            WaitInfoDTOList.Add(new WaitInfoDTO { Title = "会议二", Content = "会议内容" });
+            WaitInfoDTOList.Add(new WaitInfoDTO { Title = "会议一", Content = "会议内容" });
+            WaitInfoDTOList.Add(new WaitInfoDTO { Title = "会议二", Content = "会议内容" });
+            WaitInfoDTOList.Add(new WaitInfoDTO { Title = "会议一", Content = "会议内容" });
+            WaitInfoDTOList.Add(new WaitInfoDTO { Title = "会议二", Content = "会议内容" });
         }
 
-        public void OnDialogOpened(IDialogParameters parameters)
+        [ObservableProperty]
+        private bool _isShowAddWait;
+
+        [RelayCommand]
+        private void ShowAddWait() 
         {
-            throw new NotImplementedException();
+            IsShowAddWait = true;
         }
     }
 }

@@ -19,7 +19,7 @@ namespace WpfPrism.HttpClients
         /// <summary>
         /// 数据
         /// </summary>
-        public object Result { get; set; }
+        public object Parameter { get; set; }
 
         /// <summary>
         /// 结果信息

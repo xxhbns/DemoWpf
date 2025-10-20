@@ -1,25 +1,29 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Models.DTO;
+using Newtonsoft.Json;
 using Prism.Commands;
 using Prism.Events;
 using Prism.Mvvm;
 using Prism.Services.Dialogs;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using WpfPrism.Helpers;
 using WpfPrism.HttpClients;
 using WpfPrism.Models;
 
 namespace WpfPrism.ViewModels
 {
-    internal class LoginUCViewModel : BindableBase, IDialogAware
+    public partial class LoginUCViewModel : ObservableValidator, IDialogAware
     {
         public string Title { get; set; } = "登录";//标题
 
+        //http
         private readonly HttpRestClient _httpRestClient;
-
+        //消息通知（发布订阅）
         private readonly IEventAggregator _eventAggregator;
 
         public event Action<IDialogResult> RequestClose;
@@ -27,9 +31,9 @@ namespace WpfPrism.ViewModels
         public LoginUCViewModel(HttpRestClient httpRestClient, IEventAggregator eventAggregator)
         {
 
-            LoginCmd = new DelegateCommand(Login);
-            ChangedCmd = new DelegateCommand(Changed);
-            RegCmd = new DelegateCommand(Reg);
+            //LoginCmd = new DelegateCommand(Login);
+            //ChangedCmd = new DelegateCommand(Changed);
+            //RegCmd = new DelegateCommand(Reg);
             UsersReq = new UsersReq();
 
             //请求Client
@@ -39,16 +43,12 @@ namespace WpfPrism.ViewModels
         }
 
         #region 显示注册界面 返回登录界面
+        [ObservableProperty]
         private int _selectIndex;
 
-        public int SelectIndex
-        {
-            get { return _selectIndex; }
-            set { _selectIndex = value; RaisePropertyChanged(); }
-        }
+        //public DelegateCommand ChangedCmd { get; set; }
 
-        public DelegateCommand ChangedCmd { get; set; }
-
+        [RelayCommand]
         private void Changed()
         {
             SelectIndex = SelectIndex == 0 ? 1 : 0;
@@ -60,30 +60,21 @@ namespace WpfPrism.ViewModels
         /// <summary>
         /// 账号
         /// </summary>
+        [ObservableProperty]
         private string _account;
-
-        public string Account
-        {
-            get { return _account; }
-            set { _account = value; RaisePropertyChanged(); }
-        }
 
         /// <summary>
         /// 密码
         /// </summary>
+        [ObservableProperty]
         private string _myPwd;
 
-        public string MyPwd
-        {
-            get { return _myPwd; }
-            set { _myPwd = value; RaisePropertyChanged(); }
-        }
-
-        public DelegateCommand LoginCmd { get; set; }
+        //public DelegateCommand LoginCmd { get; set; }
 
         /// <summary>
         /// 登录
         /// </summary>
+        [RelayCommand]
         private void Login()
         {
             if (string.IsNullOrEmpty(Account) || string.IsNullOrEmpty(MyPwd))
@@ -102,7 +93,12 @@ namespace WpfPrism.ViewModels
             _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
             if (apiResponse.IsSuccess)
             {
-                RequestClose?.Invoke(new DialogResult(ButtonResult.OK));
+                UsersReq usersReq = JsonConvert.DeserializeObject<UsersReq>(apiResponse.Parameter.ToString());
+                DialogParameters paras = new()
+                {
+                    { "LoginName", usersReq.Name }
+                };
+                RequestClose?.Invoke(new DialogResult(ButtonResult.OK, paras));
             }
             else
             {
@@ -114,21 +110,18 @@ namespace WpfPrism.ViewModels
         #endregion
 
         #region 注册
-        private UsersReq _usersreq;
+        [ObservableProperty]
+        private UsersReq _usersReq;
 
-        public UsersReq UsersReq
-        {
-            get { return _usersreq; }
-            set { _usersreq = value; RaisePropertyChanged(); }
-        }
+        //public DelegateCommand RegCmd { set; get; }
 
-        public DelegateCommand RegCmd { set; get; }
-
+        [RelayCommand]
         private void Reg()
         {
             //数据校验
             if (string.IsNullOrEmpty(UsersReq.Name) || string.IsNullOrEmpty(UsersReq.Account) || string.IsNullOrEmpty(UsersReq.Password) || string.IsNullOrEmpty(UsersReq.ConfirmPwd))
             {
+                //发布消息
                 _eventAggregator.GetEvent<MsgEvent>().Publish("信息不全");
                 return;
             }

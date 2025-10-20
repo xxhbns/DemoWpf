@@ -1,31 +1,52 @@
-﻿using System;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using Models.DTO;
+using Prism.Services.Dialogs;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Prism.Services.Dialogs;
 
 namespace WpfPrism.ViewModels
 {
-    public class MemoUCViewModel : IDialogAware
+    public partial class MemoUCViewModel : ObservableValidator
     {
-        public string Title => throw new NotImplementedException();
-
-        public event Action<IDialogResult> RequestClose;
-
-        public bool CanCloseDialog()
+        public MemoUCViewModel()
         {
-            throw new NotImplementedException();
+            CreateMemoInfoDTOList();
         }
 
-        public void OnDialogClosed()
+
+        [ObservableProperty]
+        private List<MemoInfoDTO> _memoInfoDTOList;
+
+        private void CreateMemoInfoDTOList()
         {
-            throw new NotImplementedException();
+            MemoInfoDTOList = [];
+            MemoInfoDTOList.Add(new MemoInfoDTO { Title = "会议一", Content = "会议内容" });
+            MemoInfoDTOList.Add(new MemoInfoDTO { Title = "会议二", Content = "会议内容" });
+            MemoInfoDTOList.Add(new MemoInfoDTO { Title = "会议一", Content = "会议内容" });
+            MemoInfoDTOList.Add(new MemoInfoDTO { Title = "会议二", Content = "会议内容" });
+            MemoInfoDTOList.Add(new MemoInfoDTO { Title = "会议一", Content = "会议内容" });
+            MemoInfoDTOList.Add(new MemoInfoDTO { Title = "会议二", Content = "会议内容" });
+            MemoInfoDTOList.Add(new MemoInfoDTO { Title = "会议一", Content = "会议内容" });
+            MemoInfoDTOList.Add(new MemoInfoDTO { Title = "会议二", Content = "会议内容" });
+            MemoInfoDTOList.Add(new MemoInfoDTO { Title = "会议一", Content = "会议内容" });
+            MemoInfoDTOList.Add(new MemoInfoDTO { Title = "会议二", Content = "会议内容" });
+            MemoInfoDTOList.Add(new MemoInfoDTO { Title = "会议一", Content = "会议内容" });
+            MemoInfoDTOList.Add(new MemoInfoDTO { Title = "会议二", Content = "会议内容" });
+            MemoInfoDTOList.Add(new MemoInfoDTO { Title = "会议一", Content = "会议内容" });
+            MemoInfoDTOList.Add(new MemoInfoDTO { Title = "会议二", Content = "会议内容" });
         }
 
-        public void OnDialogOpened(IDialogParameters parameters)
+        [ObservableProperty]
+        private bool _isShowAddMemo;
+
+        [RelayCommand]
+        private void ShowAddMemo()
         {
-            throw new NotImplementedException();
+            IsShowAddMemo = true;
         }
     }
 }
