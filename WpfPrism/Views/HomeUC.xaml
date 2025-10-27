@@ -6,6 +6,7 @@
              xmlns:local="clr-namespace:WpfPrism.Views"
              mc:Ignorable="d" 
              xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
         <Grid.RowDefinitions>
@@ -14,10 +15,10 @@
             <RowDefinition/>
         </Grid.RowDefinitions>
 
-        <!-- 第一行 -->
+        <!-- 第一行 登录后招呼 -->
         <TextBlock Text="{Binding LoginInfo}" Grid.Row="0" FontSize="22" Margin="15,10,15,5"></TextBlock>
 
-        <!-- 第二行 -->
+        <!-- 第二行 统计面板 -->
         <ItemsControl Grid.Row="1"  ItemsSource="{Binding StatPanelList}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
@@ -26,7 +27,10 @@
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                    <Border x:Name="bor" Background="{Binding BackColor}" CornerRadius="5" Margin="10">
+                    <Border x:Name="bor" Background="{Binding BackColor}" CornerRadius="5" Margin="10" Cursor="{Binding Hand}">
+                        <Border.InputBindings>
+                            <MouseBinding MouseAction="LeftClick" Command="{Binding DataContext.NavigateCommand,RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ItemsControl}}" CommandParameter="{Binding}"></MouseBinding>
+                        </Border.InputBindings>
                         <Border.Style>
                             <Style TargetType="Border">
                                 <Style.Triggers>
@@ -44,7 +48,7 @@
                             <StackPanel Margin="20,10">
                                 <md:PackIcon Margin="0,0" Kind="{Binding Icon}" Height="30" Width="30"/>
                                 <TextBlock Text="{Binding ItemName}" Margin="0,10" FontSize="15"></TextBlock>
-                                <TextBlock Text="{Binding Result}" FontSize="40" FontWeight="Bold"></TextBlock>
+                                <TextBlock Text="{Binding Result}" FontSize="30" FontWeight="Bold"></TextBlock>
                             </StackPanel>
 
                             <Canvas ClipToBounds="True">
@@ -57,31 +61,37 @@
             </ItemsControl.ItemTemplate>
         </ItemsControl>
 
-        <!-- 第三行 -->
+        <!-- 第三行 待办事项和备忘录 -->
         <Grid Grid.Row="2" Margin="0,10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
             
-            <!-- 第一列 -->
+            <!-- 第一列 待办事项 -->
             <Border CornerRadius="10" Margin="10,0" Opacity="0.1" Background="DimGray"></Border>
             <DockPanel Margin="10,0">
                 <DockPanel Margin="10,5" LastChildFill="False" DockPanel.Dock="Top">
                     <TextBlock FontSize="20" FontWeight="Bold">待办事项</TextBlock>
-                    <Button Width="30" Height="30" DockPanel.Dock="Right" VerticalAlignment="Top" Style="{StaticResource MaterialDesignFloatingActionAccentButton}">
+                    <Button Width="30" Height="30" DockPanel.Dock="Right" VerticalAlignment="Top" Style="{StaticResource MaterialDesignFloatingActionAccentButton}" Command="{Binding ShoWAddWaitDialogCommand}">
                         <md:PackIcon Kind="Add"/>
                     </Button>
                 </DockPanel>
 
                 <ListBox ItemsSource="{Binding WaitInfoList}" HorizontalContentAlignment="Stretch" ScrollViewer.VerticalScrollBarVisibility="Hidden">
+                    <i:Interaction.Triggers>
+                        <i:EventTrigger EventName="MouseDoubleClick">
+                            <i:InvokeCommandAction Command="{Binding ShowEditWaitUCCommand}" CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ListBox}, Path=SelectedItem}">
+                            </i:InvokeCommandAction>
+                        </i:EventTrigger>
+                    </i:Interaction.Triggers>
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <DockPanel MaxHeight="60" LastChildFill="False">
-                                <ToggleButton DockPanel.Dock="Right"/>
+                            <DockPanel MaxHeight="40" LastChildFill="False">
+                                <ToggleButton DockPanel.Dock="Right" IsChecked="{Binding Status}" Command="{Binding DataContext.UpdateWaitInfoCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ListBox}}" CommandParameter="{Binding}"/>
                                 <StackPanel>
-                                    <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="16" Foreground="Black"/>
-                                    <TextBlock Text="{Binding Content}" Opacity="0.5" Margin="0,3" Foreground="Black"/>
+                                    <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="15"/>
+                                    <TextBlock Text="{Binding Contents}" Opacity="0.5" Margin="0,0" FontSize="12"/>
                                 </StackPanel>
                             </DockPanel>
                         </DataTemplate>
@@ -89,30 +99,38 @@
                 </ListBox>
             </DockPanel>
 
-            <!-- 第二列 -->
+            <!-- 第二列 备忘录 -->
             <Border Grid.Column="1" CornerRadius="10" Margin="10,0" Opacity="0.1" Background="DimGray"></Border>
             <DockPanel Grid.Column="1" Margin="10,0">
                 <DockPanel Margin="10,5" LastChildFill="False" DockPanel.Dock="Top">
                     <TextBlock FontSize="20" FontWeight="Bold">备忘录</TextBlock>
-                    <Button Width="30" Height="30" DockPanel.Dock="Right" VerticalAlignment="Top" Style="{StaticResource MaterialDesignFloatingActionAccentButton}">
+                    <Button Width="30" Height="30" DockPanel.Dock="Right" VerticalAlignment="Top" Style="{StaticResource MaterialDesignFloatingActionAccentButton}" Command="{Binding ShoWAddMemoDialogCommand}">
                         <md:PackIcon Kind="Add"/>
                     </Button>
                 </DockPanel>
 
                 <ListBox ItemsSource="{Binding MemoInfoList}" HorizontalContentAlignment="Stretch" ScrollViewer.VerticalScrollBarVisibility="Hidden">
+                    <i:Interaction.Triggers>
+                        <i:EventTrigger EventName="MouseDoubleClick">
+                            <i:InvokeCommandAction Command="{Binding ShowEditMemoUCCommand}" CommandParameter="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ListBox}, Path=SelectedItem}"/>
+                        </i:EventTrigger>
+                    </i:Interaction.Triggers>
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <DockPanel MaxHeight="60" LastChildFill="False">
-                                <ToggleButton DockPanel.Dock="Right"/>
+                                <!--<ToggleButton DockPanel.Dock="Right"/>-->
                                 <StackPanel>
-                                    <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="16" Foreground="Black"/>
-                                    <TextBlock Text="{Binding Content}" Opacity="0.5" Margin="0,3" Foreground="Black"/>
+                                    <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="16"/>
+                                    <TextBlock Text="{Binding Contents}" Opacity="0.5" Margin="0,3"/>
                                 </StackPanel>
                             </DockPanel>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
             </DockPanel>
+
+            <!--显示错误提示-->
+            <md:Snackbar x:Name="HomeBar" Grid.ColumnSpan="2" MessageQueue="{md:MessageQueue}"></md:Snackbar>
         </Grid>
     </Grid>
 </UserControl>

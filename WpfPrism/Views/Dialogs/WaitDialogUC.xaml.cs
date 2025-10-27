@@ -15,19 +15,19 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using WpfPrism.Models;
 
-namespace WpfPrism.Views
+namespace WpfPrism.Views.Dialogs
 {
     /// <summary>
-    /// HomeUC.xaml 的交互逻辑
+    /// WaitDialogUC.xaml 的交互逻辑
     /// </summary>
-    public partial class HomeUC : UserControl
+    public partial class WaitDialogUC : UserControl
     {
         /// <summary>
         /// 发布订阅
         /// </summary>
         private readonly IEventAggregator _eventAggregator;
 
-        public HomeUC(IEventAggregator eventAggregator)
+        public WaitDialogUC(IEventAggregator eventAggregator)
         {
             InitializeComponent();
             _eventAggregator = eventAggregator;
@@ -40,7 +40,7 @@ namespace WpfPrism.Views
         /// <param name="obj">接受订阅的消息</param>
         private void Sub(string obj)
         {
-            HomeBar.MessageQueue.Enqueue(obj);
+            WaitBar.MessageQueue.Enqueue(obj);
         }
     }
 }

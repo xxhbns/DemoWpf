@@ -7,24 +7,24 @@ using System.Threading.Tasks;
 namespace Models.DTO
 {
     /// <summary>
-    /// 备忘录DTO
+    /// 接受API统计待办事项DTO
     /// </summary>
-    public class MemoInfoDTO
+    public class StatWaitDTO
     {
         /// <summary>
-        /// 备忘录Id
+        /// 待办事项总数
         /// </summary>
-        public int MemoId { get; set; }
+        public int TotalCount { get; set; }
 
         /// <summary>
-        /// 标题
+        /// 已完成数量
         /// </summary>
-        public string Title { get; set; }
+        public int FinishCount { get; set; }
 
         /// <summary>
-        /// 内容
+        /// 完成比例
         /// </summary>
-        public string Contents { get; set; }
+        public string FinishPercent { get; set; }
 
     }
 }

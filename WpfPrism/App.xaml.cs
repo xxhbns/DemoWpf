@@ -1,13 +1,16 @@
-﻿using System.Configuration;
-using System.Data;
-using System.Windows;
-using DryIoc;
+﻿using DryIoc;
 using Prism.DryIoc;
 using Prism.Ioc;
 using Prism.Services.Dialogs;
+using System.Configuration;
+using System.Data;
+using System.Windows;
 using WpfPrism.HttpClients;
+using WpfPrism.Services;
 using WpfPrism.ViewModels;
+using WpfPrism.ViewModels.DialogViewModels;
 using WpfPrism.Views;
+using WpfPrism.Views.Dialogs;
 
 namespace WpfPrism
 {
@@ -47,17 +50,25 @@ namespace WpfPrism
         protected override void RegisterTypes(IContainerRegistry containerRegistry)
         {
             ///注入
+            #region 对话框
             containerRegistry.RegisterDialog<LoginUC, LoginUCViewModel>();
             containerRegistry.RegisterDialog<MainWindow, MainWindowViewModel>();
+            containerRegistry.RegisterForNavigation<WaitDialogUC, WaitDialogUCViewModel>();
+            containerRegistry.RegisterForNavigation<MemoDialogUC, MemoDialogUCViewModel>();
+            #endregion
 
+            #region 控件 导航
             containerRegistry.RegisterForNavigation<HomeUC, HomeUCViewModel>();
             containerRegistry.RegisterForNavigation<ToDoUC, ToDoUCViewModel>();
             containerRegistry.RegisterForNavigation<MemoUC, MemoUCViewModel>();
             containerRegistry.RegisterForNavigation<SettingsUC, SettingsUCViewModel>();
-
             containerRegistry.RegisterForNavigation<PersonalUC, PersonalUCViewModel>();
             containerRegistry.RegisterForNavigation<SysSetUC>();
             containerRegistry.RegisterForNavigation<AboutUC>();
+            #endregion
+
+            //自定义对话框服务
+            containerRegistry.Register<DialogHostService>();
 
             //请求
             containerRegistry.GetContainer().Register<HttpRestClient>(made: Parameters.Of.Type<string>(serviceKey: "webUrl"));

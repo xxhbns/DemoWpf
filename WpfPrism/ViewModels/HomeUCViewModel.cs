@@ -1,65 +1,389 @@
-﻿using System;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using Models.DTO;
+using Newtonsoft.Json;
+using Prism.Events;
+using Prism.Regions;
+using Prism.Services.Dialogs;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CommunityToolkit.Mvvm.ComponentModel;
-using Models.DTO;
-using Prism.Regions;
-using Prism.Services.Dialogs;
+using System.Windows;
+using WpfPrism.Helpers;
+using WpfPrism.HttpClients;
 using WpfPrism.Models;
+using WpfPrism.Services;
 
 namespace WpfPrism.ViewModels
 {
     public partial class HomeUCViewModel : ObservableValidator, INavigationAware
     {
-        public HomeUCViewModel()
-        {
-            CreateStatPanelList();
-            CreateWaitInfoList();
-            CreateMemoInfoList();
-        }
-
-        [ObservableProperty]
-        private string _loginInfo;
+        /// <summary>
+        /// http
+        /// </summary>
+        private readonly HttpRestClient httpRestClient;
 
         /// <summary>
-        /// 待办事项数据
+        /// 自定义对话框服务
         /// </summary>
-        [ObservableProperty]
-        private List<WaitInfoDTO> _waitInfoList;
+        private readonly DialogHostService dialogHostService;
 
-        private void CreateWaitInfoList() 
+        /// <summary>
+        /// 区域管理
+        /// </summary>
+        private readonly IRegionManager _regionManager;
+
+        /// <summary>
+        /// 消息通知（发布订阅）
+        /// </summary>
+        private readonly IEventAggregator _eventAggregator;
+
+        public HomeUCViewModel(HttpRestClient httpRestClient, DialogHostService dialogHostService, IRegionManager regionManager, IEventAggregator eventAggregator)
         {
-            WaitInfoList = [];
-            WaitInfoList.Add(new WaitInfoDTO { Title = "会议一", Content = "会议内容" });
-            WaitInfoList.Add(new WaitInfoDTO { Title = "会议二", Content = "会议内容" });
+            this.httpRestClient = httpRestClient;
+            this.dialogHostService = dialogHostService;
+            _regionManager = regionManager;
+            _eventAggregator = eventAggregator;
+
+            GetPanelList();
+            GetWaitInfoList();
+            GetMemoInfoList();
+            GetStatMemo();
         }
 
-        [ObservableProperty]
-        private List<MemoInfoDTO> _memoInfoList;
-
-        private void CreateMemoInfoList()
-        {
-            MemoInfoList = [];
-            MemoInfoList.Add(new MemoInfoDTO { Title = "会议一", Content = "会议内容" });
-            MemoInfoList.Add(new MemoInfoDTO { Title = "会议二", Content = "会议内容" });
-        }
-
+        #region 初始化时统计面板数据
         /// <summary>
         /// 统计面板数据
         /// </summary>
         [ObservableProperty]
         private List<StatPanelInfo> _statPanelList;
 
-        private void CreateStatPanelList()
+        /// <summary>
+        /// 初始化时统计面板数据
+        /// </summary>
+        private void GetPanelList()
         {
             StatPanelList = [];
-            StatPanelList.Add(new StatPanelInfo() { Icon = "ClockFast", ItemName = "汇总", BackColor = "#FF0CA0FF", ViewName = "WaitUC", Result = "9" });
-            StatPanelList.Add(new StatPanelInfo() { Icon = "ClockCheckOutline", ItemName = "已完成", BackColor = "#FF1ECA3A", ViewName = "WaitUC", Result = "9" });
-            StatPanelList.Add(new StatPanelInfo() { Icon = "CharLineVariant", ItemName = "完成比例", BackColor = "#FF02C6DC", ViewName = "", Result = "90%" });
-            StatPanelList.Add(new StatPanelInfo() { Icon = "PlaylistStar", ItemName = "备忘录", BackColor = "#FFFFA000", ViewName = "MemoUC", Result = "20" });
+            StatPanelList.Add(new StatPanelInfo() { Icon = "ClockFast", ItemName = "汇总", BackColor = "#FF0CA0FF", ViewName = "ToDoUC", Result = "9" });
+            StatPanelList.Add(new StatPanelInfo() { Icon = "ClockCheckOutline", ItemName = "已完成", BackColor = "#FF1ECA3A", ViewName = "ToDoUC", Result = "9" });
+            StatPanelList.Add(new StatPanelInfo() { Icon = "CharLineVariant", ItemName = "完成比例", BackColor = "#FF02C6DC", ViewName = "", Result = "99%" });
+            StatPanelList.Add(new StatPanelInfo() { Icon = "PlaylistStar", ItemName = "备忘录", BackColor = "#FFFFA000", ViewName = "MemoUC", Result = "99" });
+
+            GetStatWait();
         }
+        #endregion
+
+        #region 控制面板导航
+        [RelayCommand]
+        private void Navigate(StatPanelInfo statPanelInfo)
+        {
+            if (!string.IsNullOrEmpty(statPanelInfo.ViewName))
+            {
+                if (statPanelInfo.ItemName == "已完成")
+                {
+                    _regionManager.Regions["MainViewRegion"].RequestNavigate(statPanelInfo.ViewName,
+                        new NavigationParameters()
+                        {
+                            { "HomeTOToDo_SearchIndex", 1 }
+                        }
+                    );
+                }
+                else
+                    _regionManager.Regions["MainViewRegion"].RequestNavigate(statPanelInfo.ViewName);
+            }
+        }
+        #endregion
+
+        #region 待办事项统计
+        [ObservableProperty]
+        private StatWaitDTO _statWait;
+
+        /// <summary>
+        /// 待办事项面板统计
+        /// </summary>
+        private void GetStatWait()
+        {
+            ApiRequest apiRequest = new()
+            {
+                Method = RestSharp.Method.GET,
+                Route = "Wait/GetStatWait"
+            };
+
+            ApiResponse apiResponse = httpRestClient.Execute(apiRequest);
+            if (apiResponse.IsSuccess)
+            {
+                StatWait = JsonConvert.DeserializeObject<StatWaitDTO>(apiResponse.Parameter.ToString());
+                if (StatWait != null)
+                {
+                    RefreshWaitStat();
+                }
+            }
+        }
+
+        #endregion
+
+        #region 获取待办事项数据
+        /// <summary>
+        /// 待办事项数据
+        /// </summary>
+        [ObservableProperty]
+        private List<WaitInfoDTO> _waitInfoList;
+
+        /// <summary>
+        /// 获取待办事项数据
+        /// </summary>
+        private void GetWaitInfoList()
+        {
+            WaitInfoList = [];
+
+            ApiRequest apiRequest = new()
+            {
+                Method = RestSharp.Method.GET,
+                Route = $"Wait/GetWaitInfo?status=0",
+            };
+
+            ApiResponse apiResponse = httpRestClient.Execute(apiRequest);
+            if (apiResponse.IsSuccess)
+            {
+                WaitInfoList = JsonConvert.DeserializeObject<List<WaitInfoDTO>>(apiResponse.Parameter.ToString());
+                RefreshWaitStat();
+            }
+        }
+
+        /// <summary>
+        /// 刷新面板数据
+        /// </summary>
+        private void RefreshWaitStat()
+        {
+            StatPanelList[0].Result = StatWait.TotalCount.ToString();
+            StatPanelList[1].Result = StatWait.FinishCount.ToString();
+            StatPanelList[2].Result = StatWait.FinishPercent;
+        }
+        #endregion
+
+        #region 打开添加待办事项弹窗
+        /// <summary>
+        /// 打开添加待办事项对话框
+        /// </summary>
+        [RelayCommand]
+        private async Task ShoWAddWaitDialog()
+        {
+            var result = await dialogHostService.ShowDialog("WaitDialogUC",
+                new DialogParameters()
+                {
+                    { "DialogEnumType", DialogEnum.Add }
+                }
+            );
+
+            if (result.Result == ButtonResult.OK)
+            {
+                if (result.Parameters.TryGetValue<WaitInfoDTO>("NewWaitInfo", out var addModel))
+                {
+                    //调用Api实现添加待办事项
+                    ApiRequest apiRequest = new()
+                    {
+                        Method = RestSharp.Method.POST,
+                        Parameters = addModel,
+                        Route = "Wait/AddWaitInfo"
+                    };
+
+                    ApiResponse apiResponse = httpRestClient.Execute(apiRequest);
+                    if (apiResponse.IsSuccess)
+                    {
+                        _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
+                        WaitInfoList = JsonConvert.DeserializeObject<List<WaitInfoDTO>>(apiResponse.Parameter.ToString());
+                        GetStatWait();
+                    }
+                }
+            }
+        }
+        #endregion
+
+        #region 修改待办事项
+        [RelayCommand]
+        private void UpdateWaitInfo(WaitInfoDTO waitInfoDTO)
+        {
+            ApiRequest ApiRequest = new()
+            {
+                Method = RestSharp.Method.PUT,
+                Parameters = waitInfoDTO,
+                Route = "Wait/UpdateWaitInfo"
+            };
+
+            ApiResponse apiResponse = httpRestClient.Execute(ApiRequest);
+
+            if (apiResponse.IsSuccess)
+            {
+                GetStatWait();
+            }
+            _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
+        }
+        #endregion
+
+        #region 点击打开编辑待办事项弹窗
+        [RelayCommand]
+        private async Task ShowEditWaitUC(WaitInfoDTO waitInfoDTO)
+        {
+            var result = await dialogHostService.ShowDialog("WaitDialogUC",
+                new DialogParameters()
+                {
+                    { "OldWaitInfo", waitInfoDTO },
+                    { "DialogEnumType", DialogEnum.Edit }
+                }
+            );
+
+            if (result.Result == ButtonResult.OK)
+            {
+                if (result.Parameters.TryGetValue<WaitInfoDTO>("NewWaitInfo", out var NewWaitModel))
+                {
+                    //调用Api实现添加待办事项
+                    ApiRequest apiRequest = new()
+                    {
+                        Method = RestSharp.Method.PUT,
+                        Parameters = NewWaitModel,
+                        Route = "Wait/UpdateWaitInfo"
+                    };
+
+                    ApiResponse apiResponse = httpRestClient.Execute(apiRequest);
+                    if (apiResponse.IsSuccess)
+                    {
+                        _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
+                        WaitInfoList = JsonConvert.DeserializeObject<List<WaitInfoDTO>>(apiResponse.Parameter.ToString());
+                        GetStatWait();
+                    }
+                }
+            }
+        }
+        #endregion
+
+        #region 统计备忘录数据
+        /// <summary>
+        /// 统计备忘录数据
+        /// </summary>
+        private void GetStatMemo()
+        {
+            ApiRequest apiRequest = new()
+            {
+                Method = RestSharp.Method.GET,
+                Route = "Memo/StatMemoInfo"
+            };
+
+            ApiResponse apiResponse = httpRestClient.Execute(apiRequest);
+            if (apiResponse.IsSuccess)
+            {
+                StatPanelList[3].Result = JsonConvert.DeserializeObject<string>(apiResponse.Parameter.ToString());
+            }
+        }
+        #endregion
+
+        #region 获取备忘录数据
+        [ObservableProperty]
+        private List<MemoInfoDTO> _memoInfoList;
+
+        /// <summary>
+        /// 获取备忘录数据
+        /// </summary>
+        private void GetMemoInfoList()
+        {
+            MemoInfoList = [];
+
+            ApiRequest apiRequest = new()
+            {
+                Method = RestSharp.Method.GET,
+                Route = "Memo/GetMemoList"
+            };
+
+            ApiResponse apiResponse = httpRestClient.Execute(apiRequest);
+            if (apiResponse.IsSuccess)
+            {
+                MemoInfoList = JsonConvert.DeserializeObject<List<MemoInfoDTO>>(apiResponse.Parameter.ToString());
+            }
+        }
+        #endregion
+
+        #region 打开添加备忘录弹窗
+        /// <summary>
+        /// 打开添加备忘录弹窗
+        /// </summary>
+        [RelayCommand]
+        private async Task ShoWAddMemoDialog()
+        {
+            var result = await dialogHostService.ShowDialog("MemoDialogUC",
+                new DialogParameters()
+                {
+                    { "DialogEnumType", DialogEnum.Add }
+                }
+            );
+
+            if (result.Result == ButtonResult.OK)
+            {
+                if (result.Parameters.TryGetValue<MemoInfoDTO>("NewMemoInfo", out var addModel))
+                {
+                    //调用Api实现添加待办事项
+                    ApiRequest apiRequest = new()
+                    {
+                        Method = RestSharp.Method.POST,
+                        Parameters = addModel,
+                        Route = "Memo/AddMemoInfo"
+                    };
+
+                    ApiResponse apiResponse = httpRestClient.Execute(apiRequest);
+                    if (apiResponse.IsSuccess)
+                    {
+                        _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
+                        MemoInfoList = JsonConvert.DeserializeObject<List<MemoInfoDTO>>(apiResponse.Parameter.ToString());
+                        GetStatMemo();
+                    }
+                }
+            }
+        }
+        #endregion
+
+        #region 点击打开编辑备忘录弹窗
+        /// <summary>
+        /// 点击打开编辑备忘录弹窗
+        /// </summary>
+        /// <param name="memoInfoDTO"></param>
+        /// <returns></returns>
+        [RelayCommand]
+        private async Task ShowEditMemoUC(MemoInfoDTO memoInfoDTO)
+        {
+            var result = await dialogHostService.ShowDialog("MemoDialogUC",
+                new DialogParameters()
+                {
+                    { "OldMemoInfo", memoInfoDTO },
+                    { "DialogEnumType", DialogEnum.Edit }
+                }
+            );
+
+            if (result.Result == ButtonResult.OK)
+            {
+                if (result.Parameters.TryGetValue<MemoInfoDTO>("NewMemoInfo", out var NewMemoModel))
+                {
+                    //调用Api实现添加待办事项
+                    ApiRequest apiRequest = new()
+                    {
+                        Method = RestSharp.Method.PUT,
+                        Parameters = NewMemoModel,
+                        Route = "Memo/UpdateMemoInfo"
+                    };
+
+                    ApiResponse apiResponse = httpRestClient.Execute(apiRequest);
+                    if (apiResponse.IsSuccess)
+                    {
+                        _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
+                        MemoInfoList = JsonConvert.DeserializeObject<List<MemoInfoDTO>>(apiResponse.Parameter.ToString());
+                    }
+                }
+            }
+        }
+        #endregion
+
+        #region 接收导航参数
+        [ObservableProperty]
+        private string _loginInfo;
 
         /// <summary>
         /// 接受导航
@@ -90,5 +414,7 @@ namespace WpfPrism.ViewModels
         {
 
         }
+        #endregion
+
     }
 }

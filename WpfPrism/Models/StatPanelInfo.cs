@@ -1,4 +1,6 @@
-﻿using System;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using Prism.Mvvm;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,7 +11,7 @@ namespace WpfPrism.Models
     /// <summary>
     /// 首页统计面板
     /// </summary>
-    public class StatPanelInfo
+    public partial class StatPanelInfo : ObservableValidator
     {
         /// <summary>
         /// 统计项图标
@@ -24,7 +26,17 @@ namespace WpfPrism.Models
         /// <summary>
         /// 统计结果
         /// </summary>
-        public string Result { get; set; }
+        [ObservableProperty]
+        private string _result;
+        //public string Result 
+        //{
+        //    get { return _result; }
+        //    set 
+        //    {
+        //        _result = value;
+        //        RaisePropertyChanged();
+        //    }
+        //}
 
         /// <summary>
         /// 背景颜色
@@ -35,5 +47,16 @@ namespace WpfPrism.Models
         /// 点击跳转的 界面名称
         /// </summary>
         public string ViewName { get; set; }
+
+        public string Hand 
+        {
+            get 
+            {
+                if (ItemName == "完成比例")
+                    return "";
+                else
+                    return "Hand";
+            }
+        }
     }
 }

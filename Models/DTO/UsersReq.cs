@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace Models.DTO
 {
+    /// <summary>
+    /// 用户信息DTO
+    /// </summary>
     public class UsersReq
     {
         /// <summary>

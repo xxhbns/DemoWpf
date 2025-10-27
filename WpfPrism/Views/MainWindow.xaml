@@ -10,6 +10,8 @@
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         mc:Ignorable="d"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        Background="{DynamicResource MaterialDesignPaper}"
         FontFamily="微软雅黑"
         Loaded="Window_Loaded"
         Title="MainWindow" Height="600" Width="1000">
@@ -114,7 +116,7 @@
 
                     </DockPanel>
                 </materialDesign:ColorZone>
-
+                
                 <ContentControl prism:RegionManager.RegionName="MainViewRegion"></ContentControl>
             </DockPanel>
         </materialDesign:DrawerHost>

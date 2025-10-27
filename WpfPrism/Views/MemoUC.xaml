@@ -11,7 +11,7 @@
         <md:DrawerHost IsRightDrawerOpen="{Binding IsShowAddMemo}">
             <md:DrawerHost.RightDrawerContent>
                 <DockPanel Width="300" LastChildFill="False">
-                    <TextBlock Text="添加备忘录" FontWeight="Bold" FontSize="20" Margin="20,20,20,0" DockPanel.Dock="Top" Foreground="DimGray"/>
+                    <TextBlock Text="添加备忘录" FontWeight="Bold" FontSize="20" Margin="20,20,20,0" DockPanel.Dock="Top"/>
                     <StackPanel Orientation="Horizontal" Margin="20" DockPanel.Dock="Top">
                         <!--<TextBlock Text="状态" VerticalAlignment="Center" Margin="0,0,10,0"/>-->
                         <!--<ComboBox SelectedIndex="0">
@@ -20,8 +20,8 @@
                         </ComboBox>-->
                     </StackPanel>
 
-                    <TextBox md:HintAssist.Hint="请输入备忘录标题" Margin="20,0,20,10" DockPanel.Dock="Top" Foreground="DimGray"/>
-                    <TextBox md:HintAssist.Hint="请输入备忘录内容" Margin="20,10" DockPanel.Dock="Top" MinHeight="100" Foreground="DimGray"/>
+                    <TextBox md:HintAssist.Hint="请输入备忘录标题" Margin="20,0,20,10" DockPanel.Dock="Top"/>
+                    <TextBox md:HintAssist.Hint="请输入备忘录内容" Margin="20,10" DockPanel.Dock="Top" MinHeight="100"/>
 
                     <Button Content="添加到备忘录" Margin=" 20,10" DockPanel.Dock="Top"></Button>
                 </DockPanel>
@@ -35,7 +35,11 @@
 
                 <!--#region 第一行 -->
                 <StackPanel Orientation="Horizontal" Margin="15,0,0,0">
-                    <TextBox VerticalAlignment="Center" Width="200" md:HintAssist.Hint="查找备忘录事项..." md:TextFieldAssist.HasClearButton="True"></TextBox>
+                    <TextBox Text="{Binding SearchTitle, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" Width="200" md:HintAssist.Hint="查找备忘录事项..." md:TextFieldAssist.HasClearButton="True">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Enter" Command="{Binding QueryMemoInfosCommand}"></KeyBinding>
+                        </TextBox.InputBindings>
+                    </TextBox>
                     <!--<TextBlock Text="筛选" Margin="10,0" VerticalAlignment="Center"/>
                     <ComboBox SelectedIndex="0">
                         <ComboBoxItem>全部</ComboBoxItem>
@@ -69,8 +73,8 @@
                                                 <Button Content="删除" Height="30" VerticalContentAlignment="Center"/>
                                             </md:PopupBox>
 
-                                            <TextBlock Text="{Binding Title}" Margin="10,5" FontWeight="Bold"/>
-                                            <TextBlock Text="{Binding Content}" Grid.Row="1" Margin="10,5"/>
+                                            <TextBlock Text="{Binding Title}" Margin="10,5" FontWeight="Bold" FontSize="18"/>
+                                            <TextBlock Text="{Binding Contents}" Grid.Row="1" Margin="10,5" FontSize="13"/>
 
                                             <Canvas ClipToBounds="True" Grid.RowSpan="2">
                                                 <Border Canvas.Top="10" Canvas.Right="-50" Width="120" Height="120" Background="#ffffff" CornerRadius="100" Opacity="0.1"></Border>

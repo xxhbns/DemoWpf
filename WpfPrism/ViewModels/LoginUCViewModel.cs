@@ -21,9 +21,14 @@ namespace WpfPrism.ViewModels
     {
         public string Title { get; set; } = "登录";//标题
 
-        //http
+        /// <summary>
+        /// http
+        /// </summary>
         private readonly HttpRestClient _httpRestClient;
-        //消息通知（发布订阅）
+
+        /// <summary>
+        /// 消息通知（发布订阅）
+        /// </summary>
         private readonly IEventAggregator _eventAggregator;
 
         public event Action<IDialogResult> RequestClose;
@@ -83,8 +88,10 @@ namespace WpfPrism.ViewModels
                 return;
             }
 
-            ApiRequest apiRequest = new ApiRequest();
-            apiRequest.Method = RestSharp.Method.GET;
+            ApiRequest apiRequest = new()
+            {
+                Method = RestSharp.Method.GET
+            };
 
             MyPwd = MD5Helper.GetMD5(MyPwd);
             apiRequest.Route = $"Users/Login?account={Account}&password={MyPwd}";
@@ -132,9 +139,11 @@ namespace WpfPrism.ViewModels
             }
 
             //调用Api
-            ApiRequest apiRequest = new ApiRequest();
-            apiRequest.Method = RestSharp.Method.POST;
-            apiRequest.Route = "Users/Reg";
+            ApiRequest apiRequest = new()
+            {
+                Method = RestSharp.Method.POST,
+                Route = "Users/Reg"
+            };
 
             //对密码进行处理
             UsersReq.Password = MD5Helper.GetMD5(UsersReq.Password);

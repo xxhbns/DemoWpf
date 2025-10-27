@@ -24,11 +24,22 @@ namespace Models.DTO
         /// <summary>
         /// 内容
         /// </summary>
-        public string Content { get; set; }
+        public string Contents { get; set; }
 
         /// <summary>
         /// 状态
         /// </summary>
         public int Status { get; set; }
+
+        /// <summary>
+        /// 背景颜色
+        /// </summary>
+        public string BackColor
+        { 
+            get 
+            {
+                return Status == 0 ? "#1E90FF" : "#3CB371";
+            } 
+        }
     }
 }
