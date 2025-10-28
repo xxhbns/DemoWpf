@@ -14,16 +14,16 @@
                     <TextBlock Text="添加待办" FontWeight="Bold" FontSize="20" Margin="20,20,20,10" DockPanel.Dock="Top"/>
                     <StackPanel Orientation="Horizontal" Margin="20" DockPanel.Dock="Top">
                         <TextBlock Text="状态" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                        <ComboBox SelectedIndex="0">
+                        <ComboBox SelectedIndex="{Binding WaitInfoDTO.Status}">
                             <ComboBoxItem>待办</ComboBoxItem>
                             <ComboBoxItem>已完成</ComboBoxItem>
                         </ComboBox>
                     </StackPanel>
 
-                    <TextBox md:HintAssist.Hint="请输入待办标题" Margin="20,10" DockPanel.Dock="Top"/>
-                    <TextBox md:HintAssist.Hint="请输入待办内容" Margin="20,10" DockPanel.Dock="Top" MinHeight="100"/>
+                    <TextBox md:HintAssist.Hint="请输入待办标题" Margin="20,10" DockPanel.Dock="Top" Text="{Binding WaitInfoDTO.Title}"/>
+                    <TextBox md:HintAssist.Hint="请输入待办内容" Margin="20,10" DockPanel.Dock="Top" MinHeight="100" Text="{Binding WaitInfoDTO.Contents}"/>
 
-                    <Button Content="添加到待办" Margin=" 20,10" DockPanel.Dock="Top"></Button>
+                    <Button Content="添加到待办" Margin=" 20,10" DockPanel.Dock="Top" Command="{Binding AddWaitInfoCommand}"></Button>
                 </DockPanel>
             </md:DrawerHost.RightDrawerContent>
 
@@ -52,6 +52,16 @@
                 <!--#endregion-->
 
                 <!-- 第二行 -->
+                <StackPanel Grid.Row="1" VerticalAlignment="Center" Visibility="{Binding NoListHidden}">
+                    <Image Source="/Images/noList.png" Width="300" Height="300"/>
+                    <TextBlock Margin="0,10" FontSize="18" HorizontalAlignment="Center" Text="没有待办事项，您可以添加一些待办事项。"/>
+                </StackPanel>
+
+                <StackPanel Grid.Row="1" VerticalAlignment="Center" Visibility="{Binding ErrorHidden}">
+                    <Image Source="/Images/error.png" Width="250" Height="270"/>
+                    <TextBlock Margin="0,10" FontSize="18" HorizontalAlignment="Center" Text="抱歉，出错了！"/>
+                </StackPanel>
+
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
                     <ItemsControl Grid.Row="1" HorizontalAlignment="Left" ItemsSource="{Binding WaitInfoDTOList}" Margin="35,0,0,0">
                         <ItemsControl.ItemsPanel>
@@ -70,7 +80,7 @@
                                             </Grid.RowDefinitions>
 
                                             <md:PopupBox HorizontalAlignment="Right" Panel.ZIndex="1" Margin="0,5,0,0">
-                                                <Button Content="删除" Height="30" VerticalContentAlignment="Center"/>
+                                                <Button Content="删除" Height="30" VerticalContentAlignment="Center" Command="{Binding DataContext.DeleteWaitInfoCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ItemsControl}}" CommandParameter="{Binding}"/>
                                             </md:PopupBox>
 
                                             <TextBlock Text="{Binding Title}" Margin="10,5" FontWeight="Bold" FontSize="18"/>
@@ -88,6 +98,9 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </ScrollViewer>
+                
+                <!--显示错误提示-->
+                <md:Snackbar x:Name="WaitUCBar" MessageQueue="{md:MessageQueue}" Grid.Row="1"></md:Snackbar>
             </Grid>
         </md:DrawerHost>
         

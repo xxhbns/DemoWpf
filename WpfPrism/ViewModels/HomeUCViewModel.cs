@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using WpfPrism.Helpers;
 using WpfPrism.HttpClients;
+using WpfPrism.HttpClients.Services;
 using WpfPrism.Models;
 using WpfPrism.Services;
 
@@ -21,9 +22,19 @@ namespace WpfPrism.ViewModels
     public partial class HomeUCViewModel : ObservableValidator, INavigationAware
     {
         /// <summary>
+        /// 待办事项API接口管理
+        /// </summary>
+        private readonly WaitServices _waitServices;
+
+        /// <summary>
+        /// 备忘录API接口管理
+        /// </summary>
+        private readonly MemoServices _memoServices;
+
+        /// <summary>
         /// http
         /// </summary>
-        private readonly HttpRestClient httpRestClient;
+        //private readonly HttpRestClient httpRestClient;
 
         /// <summary>
         /// 自定义对话框服务
@@ -40,9 +51,11 @@ namespace WpfPrism.ViewModels
         /// </summary>
         private readonly IEventAggregator _eventAggregator;
 
-        public HomeUCViewModel(HttpRestClient httpRestClient, DialogHostService dialogHostService, IRegionManager regionManager, IEventAggregator eventAggregator)
+        public HomeUCViewModel(WaitServices waitServices, MemoServices memoServices, DialogHostService dialogHostService, IRegionManager regionManager, IEventAggregator eventAggregator)
         {
-            this.httpRestClient = httpRestClient;
+            _waitServices = waitServices;
+            _memoServices = memoServices;
+            //this.httpRestClient = httpRestClient;
             this.dialogHostService = dialogHostService;
             _regionManager = regionManager;
             _eventAggregator = eventAggregator;
@@ -105,19 +118,17 @@ namespace WpfPrism.ViewModels
         /// </summary>
         private void GetStatWait()
         {
-            ApiRequest apiRequest = new()
-            {
-                Method = RestSharp.Method.GET,
-                Route = "Wait/GetStatWait"
-            };
-
-            ApiResponse apiResponse = httpRestClient.Execute(apiRequest);
+            ApiResponse apiResponse = _waitServices.GetStatWait();
             if (apiResponse.IsSuccess)
             {
                 StatWait = JsonConvert.DeserializeObject<StatWaitDTO>(apiResponse.Parameter.ToString());
                 if (StatWait != null)
                 {
                     RefreshWaitStat();
+                }
+                else
+                {
+                    _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
                 }
             }
         }
@@ -138,17 +149,15 @@ namespace WpfPrism.ViewModels
         {
             WaitInfoList = [];
 
-            ApiRequest apiRequest = new()
-            {
-                Method = RestSharp.Method.GET,
-                Route = $"Wait/GetWaitInfo?status=0",
-            };
-
-            ApiResponse apiResponse = httpRestClient.Execute(apiRequest);
+            ApiResponse apiResponse = _waitServices.GetWaitInfoList();
             if (apiResponse.IsSuccess)
             {
                 WaitInfoList = JsonConvert.DeserializeObject<List<WaitInfoDTO>>(apiResponse.Parameter.ToString());
                 RefreshWaitStat();
+            }
+            else
+            {
+                _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
             }
         }
 
@@ -182,17 +191,10 @@ namespace WpfPrism.ViewModels
                 if (result.Parameters.TryGetValue<WaitInfoDTO>("NewWaitInfo", out var addModel))
                 {
                     //调用Api实现添加待办事项
-                    ApiRequest apiRequest = new()
-                    {
-                        Method = RestSharp.Method.POST,
-                        Parameters = addModel,
-                        Route = "Wait/AddWaitInfo"
-                    };
-
-                    ApiResponse apiResponse = httpRestClient.Execute(apiRequest);
+                    ApiResponse apiResponse = _waitServices.AddWaitInfo(addModel);
+                    _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
                     if (apiResponse.IsSuccess)
                     {
-                        _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
                         WaitInfoList = JsonConvert.DeserializeObject<List<WaitInfoDTO>>(apiResponse.Parameter.ToString());
                         GetStatWait();
                     }
@@ -205,20 +207,13 @@ namespace WpfPrism.ViewModels
         [RelayCommand]
         private void UpdateWaitInfo(WaitInfoDTO waitInfoDTO)
         {
-            ApiRequest ApiRequest = new()
-            {
-                Method = RestSharp.Method.PUT,
-                Parameters = waitInfoDTO,
-                Route = "Wait/UpdateWaitInfo"
-            };
+            ApiResponse apiResponse = _waitServices.UpdateWaitInfo(waitInfoDTO);
 
-            ApiResponse apiResponse = httpRestClient.Execute(ApiRequest);
-
+            _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
             if (apiResponse.IsSuccess)
             {
                 GetStatWait();
             }
-            _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
         }
         #endregion
 
@@ -239,17 +234,11 @@ namespace WpfPrism.ViewModels
                 if (result.Parameters.TryGetValue<WaitInfoDTO>("NewWaitInfo", out var NewWaitModel))
                 {
                     //调用Api实现添加待办事项
-                    ApiRequest apiRequest = new()
-                    {
-                        Method = RestSharp.Method.PUT,
-                        Parameters = NewWaitModel,
-                        Route = "Wait/UpdateWaitInfo"
-                    };
+                    ApiResponse apiResponse = _waitServices.UpdateWaitInfo(NewWaitModel);
 
-                    ApiResponse apiResponse = httpRestClient.Execute(apiRequest);
+                    _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
                     if (apiResponse.IsSuccess)
                     {
-                        _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
                         WaitInfoList = JsonConvert.DeserializeObject<List<WaitInfoDTO>>(apiResponse.Parameter.ToString());
                         GetStatWait();
                     }
@@ -264,16 +253,15 @@ namespace WpfPrism.ViewModels
         /// </summary>
         private void GetStatMemo()
         {
-            ApiRequest apiRequest = new()
-            {
-                Method = RestSharp.Method.GET,
-                Route = "Memo/StatMemoInfo"
-            };
+            ApiResponse apiResponse = _memoServices.GetStatMemo();
 
-            ApiResponse apiResponse = httpRestClient.Execute(apiRequest);
             if (apiResponse.IsSuccess)
             {
                 StatPanelList[3].Result = JsonConvert.DeserializeObject<string>(apiResponse.Parameter.ToString());
+            }
+            else
+            {
+                _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
             }
         }
         #endregion
@@ -289,16 +277,14 @@ namespace WpfPrism.ViewModels
         {
             MemoInfoList = [];
 
-            ApiRequest apiRequest = new()
-            {
-                Method = RestSharp.Method.GET,
-                Route = "Memo/GetMemoList"
-            };
-
-            ApiResponse apiResponse = httpRestClient.Execute(apiRequest);
+            ApiResponse apiResponse = _memoServices.GetMemoInfoList();
             if (apiResponse.IsSuccess)
             {
                 MemoInfoList = JsonConvert.DeserializeObject<List<MemoInfoDTO>>(apiResponse.Parameter.ToString());
+            }
+            else
+            {
+                _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
             }
         }
         #endregion
@@ -322,17 +308,10 @@ namespace WpfPrism.ViewModels
                 if (result.Parameters.TryGetValue<MemoInfoDTO>("NewMemoInfo", out var addModel))
                 {
                     //调用Api实现添加待办事项
-                    ApiRequest apiRequest = new()
-                    {
-                        Method = RestSharp.Method.POST,
-                        Parameters = addModel,
-                        Route = "Memo/AddMemoInfo"
-                    };
-
-                    ApiResponse apiResponse = httpRestClient.Execute(apiRequest);
+                    ApiResponse apiResponse = _memoServices.AddMemoInfo(addModel);
+                    _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
                     if (apiResponse.IsSuccess)
                     {
-                        _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
                         MemoInfoList = JsonConvert.DeserializeObject<List<MemoInfoDTO>>(apiResponse.Parameter.ToString());
                         GetStatMemo();
                     }
@@ -363,17 +342,10 @@ namespace WpfPrism.ViewModels
                 if (result.Parameters.TryGetValue<MemoInfoDTO>("NewMemoInfo", out var NewMemoModel))
                 {
                     //调用Api实现添加待办事项
-                    ApiRequest apiRequest = new()
-                    {
-                        Method = RestSharp.Method.PUT,
-                        Parameters = NewMemoModel,
-                        Route = "Memo/UpdateMemoInfo"
-                    };
-
-                    ApiResponse apiResponse = httpRestClient.Execute(apiRequest);
+                    ApiResponse apiResponse = _memoServices.UpdateMemoInfo(NewMemoModel);
+                    _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
                     if (apiResponse.IsSuccess)
                     {
-                        _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
                         MemoInfoList = JsonConvert.DeserializeObject<List<MemoInfoDTO>>(apiResponse.Parameter.ToString());
                     }
                 }

@@ -1,15 +1,19 @@
-﻿using System;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using Models.DTO;
+using Newtonsoft.Json;
+using Prism.Events;
+using Prism.Regions;
+using Prism.Services.Dialogs;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using Models.DTO;
-using Newtonsoft.Json;
-using Prism.Regions;
-using Prism.Services.Dialogs;
+using System.Windows;
 using WpfPrism.HttpClients;
+using WpfPrism.HttpClients.Services;
+using WpfPrism.Models;
 
 namespace WpfPrism.ViewModels
 {
@@ -18,13 +22,55 @@ namespace WpfPrism.ViewModels
         /// <summary>
         /// http
         /// </summary>
-        private readonly HttpRestClient httpRestClient;
+        //private readonly HttpRestClient httpRestClient;
 
-        public ToDoUCViewModel(HttpRestClient httpRestClient)
+        /// <summary>
+        /// 待办事项API接口管理
+        /// </summary>
+        private readonly WaitServices _waitServices;
+
+        /// <summary>
+        /// 消息通知（发布订阅）
+        /// </summary>
+        private readonly IEventAggregator _eventAggregator;
+
+        public ToDoUCViewModel(WaitServices waitServices, IEventAggregator eventAggregator)
         {
-            this.httpRestClient = httpRestClient;
+            _waitServices = waitServices;
+            //this.httpRestClient = httpRestClient;
+            _eventAggregator = eventAggregator;
             SearchIndex = 2;
         }
+
+        #region 列表为空或出错时显示的界面控制
+        [ObservableProperty]
+        private Visibility _noListHidden;
+
+        [ObservableProperty]
+        private Visibility _errorHidden;
+
+        /// <summary>
+        /// 是否显示列表
+        /// </summary>
+        private void IsShowNoList(bool IsSuccess)
+        {
+            if (IsSuccess)
+            {
+                if (WaitInfoDTOList == null || WaitInfoDTOList.Count == 0)
+                {
+                    NoListHidden = Visibility.Visible;
+                }
+                else NoListHidden = Visibility.Hidden;
+                ErrorHidden = Visibility.Hidden;
+            }
+            else
+            {
+                ErrorHidden = Visibility.Visible;
+                NoListHidden = Visibility.Hidden;
+            }
+        }
+
+        #endregion
 
         #region 查询待办事项数据
         /// <summary>
@@ -60,16 +106,7 @@ namespace WpfPrism.ViewModels
         private void QueryWaitInfoDTOList()
         {
             //通过Api获取待办事项数据
-            ApiRequest apiRequest = new()
-            {
-                Method = RestSharp.Method.GET,
-                Route = $"Wait/GetWaitInfo?title={SearchTitle}"
-            };
-            if (SearchIndex != 2)
-            {
-                apiRequest.Route += $"&status={SearchIndex}";
-            }
-            ApiResponse apiResponse = httpRestClient.Execute(apiRequest);
+            ApiResponse apiResponse = _waitServices.QueryWaitInfoDTOList(SearchTitle, SearchIndex);
             if (apiResponse.IsSuccess) 
             {
                 WaitInfoDTOList = JsonConvert.DeserializeObject<List<WaitInfoDTO>>(apiResponse.Parameter.ToString());
@@ -77,7 +114,9 @@ namespace WpfPrism.ViewModels
             else
             {
                 WaitInfoDTOList = [];
+                _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
             }
+            IsShowNoList(apiResponse.IsSuccess);
         }
         #endregion
 
@@ -89,7 +128,54 @@ namespace WpfPrism.ViewModels
         private void ShowAddWait()
         {
             IsShowAddWait = true;
-        } 
+        }
+        #endregion
+
+        #region 添加待办事项
+        /// <summary>
+        /// 前台绑定的数据
+        /// </summary>
+        public WaitInfoDTO WaitInfoDTO { get; set; } = new WaitInfoDTO();
+
+        [RelayCommand]
+        private void AddWaitInfo()
+        {
+            if (string.IsNullOrEmpty(WaitInfoDTO.Title) || string.IsNullOrEmpty(WaitInfoDTO.Contents))
+            {
+                return;
+            }
+
+            //调用Api实现添加待办事项
+            ApiResponse apiResponse = _waitServices.AddWaitInfo(WaitInfoDTO);
+            _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
+            if (apiResponse.IsSuccess)
+            {
+                //WaitInfoDTOList = JsonConvert.DeserializeObject<List<WaitInfoDTO>>(apiResponse.Parameter.ToString());
+                QueryWaitInfoDTOList();
+                IsShowAddWait = false;
+            }
+        }
+        #endregion
+
+        #region 删除待办事项
+        /// <summary>
+        /// 删除待办事项
+        /// </summary>
+        /// <param name="waitInfoDTO"></param>
+        [RelayCommand]
+        private void DeleteWaitInfo(WaitInfoDTO waitInfoDTO)
+        {
+            if (MessageBox.Show("确定删除此条待办事项？", "温馨提示", MessageBoxButton.OKCancel) == MessageBoxResult.OK)
+            {
+                //调用API
+                ApiResponse apiResponse = _waitServices.DeleteWaitInfo(waitInfoDTO);
+                _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
+                if (apiResponse.IsSuccess)
+                {
+                    QueryWaitInfoDTOList();
+                }
+            }
+        }
         #endregion
 
         #region 区域导航
@@ -101,6 +187,7 @@ namespace WpfPrism.ViewModels
             }
             else 
                 SearchIndex = 2;
+            SearchTitle = "";
             QueryWaitInfoDTOList();
         }
 
@@ -112,7 +199,8 @@ namespace WpfPrism.ViewModels
         public void OnNavigatedFrom(NavigationContext navigationContext)
         {
 
-        } 
+        }
         #endregion
+
     }
 }

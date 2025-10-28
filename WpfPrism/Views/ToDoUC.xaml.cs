@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Prism.Events;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,6 +13,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using WpfPrism.Models;
 
 namespace WpfPrism.Views
 {
@@ -20,9 +22,26 @@ namespace WpfPrism.Views
     /// </summary>
     public partial class ToDoUC : UserControl
     {
-        public ToDoUC()
+        /// <summary>
+        /// 消息通知（发布订阅）
+        /// </summary>
+        private readonly IEventAggregator _eventAggregator;
+
+        public ToDoUC(IEventAggregator eventAggregator)
         {
             InitializeComponent();
+            _eventAggregator = eventAggregator;
+            _eventAggregator.GetEvent<MsgEvent>().Subscribe(Sub);
         }
+
+        /// <summary>
+        /// 订阅后执行的任务
+        /// </summary>
+        /// <param name="obj">接受订阅的消息</param>
+        private void Sub(string obj)
+        {
+            WaitUCBar.MessageQueue.Enqueue(obj);
+        }
+
     }
 }

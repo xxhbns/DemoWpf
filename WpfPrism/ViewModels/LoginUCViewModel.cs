@@ -13,6 +13,7 @@ using System.Text;
 using System.Threading.Tasks;
 using WpfPrism.Helpers;
 using WpfPrism.HttpClients;
+using WpfPrism.HttpClients.Services;
 using WpfPrism.Models;
 
 namespace WpfPrism.ViewModels
@@ -24,27 +25,34 @@ namespace WpfPrism.ViewModels
         /// <summary>
         /// http
         /// </summary>
-        private readonly HttpRestClient _httpRestClient;
+        //private readonly HttpRestClient _httpRestClient;
 
         /// <summary>
         /// 消息通知（发布订阅）
         /// </summary>
         private readonly IEventAggregator _eventAggregator;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        private readonly UserServices _userServices;
+
         public event Action<IDialogResult> RequestClose;
 
-        public LoginUCViewModel(HttpRestClient httpRestClient, IEventAggregator eventAggregator)
+        public LoginUCViewModel(IEventAggregator eventAggregator, UserServices userServices)
         {
+            UsersReq = new UsersReq();
+
+            //请求Client
+            //_httpRestClient = httpRestClient;
+
+            _eventAggregator = eventAggregator;
+            _userServices = userServices;
 
             //LoginCmd = new DelegateCommand(Login);
             //ChangedCmd = new DelegateCommand(Changed);
             //RegCmd = new DelegateCommand(Reg);
-            UsersReq = new UsersReq();
-
-            //请求Client
-            _httpRestClient = httpRestClient;
-
-            _eventAggregator = eventAggregator;
+            //LoginCommand = new AsyncRelayCommand(LoginAsync);
         }
 
         #region 显示注册界面 返回登录界面
@@ -76,44 +84,46 @@ namespace WpfPrism.ViewModels
 
         //public DelegateCommand LoginCmd { get; set; }
 
+        //public IAsyncRelayCommand LoginCommand { get; }
+
         /// <summary>
         /// 登录
         /// </summary>
         [RelayCommand]
-        private void Login()
+        private async Task LoginAsync()
         {
-            if (string.IsNullOrEmpty(Account) || string.IsNullOrEmpty(MyPwd))
+            try
             {
-                _eventAggregator.GetEvent<MsgEvent>().Publish("信息不全");
-                return;
-            }
+                if (string.IsNullOrEmpty(Account) || string.IsNullOrEmpty(MyPwd))
+                {
+                    _eventAggregator.GetEvent<MsgEvent>().Publish("信息不全");
+                    return;
+                }
 
-            ApiRequest apiRequest = new()
-            {
-                Method = RestSharp.Method.GET
-            };
+                ApiResponse apiResponse = await _userServices.UserLoginAsync(Account, MyPwd);
 
-            MyPwd = MD5Helper.GetMD5(MyPwd);
-            apiRequest.Route = $"Users/Login?account={Account}&password={MyPwd}";
-
-            ApiResponse apiResponse = _httpRestClient.Execute(apiRequest);
-            _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
-            if (apiResponse.IsSuccess)
-            {
-                UsersReq usersReq = JsonConvert.DeserializeObject<UsersReq>(apiResponse.Parameter.ToString());
-                DialogParameters paras = new()
+                _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
+                if (apiResponse.IsSuccess)
+                {
+                    UsersReq usersReq = JsonConvert.DeserializeObject<UsersReq>(apiResponse.Parameter.ToString());
+                    DialogParameters paras = new()
                 {
                     { "LoginName", usersReq.Name }
                 };
-                RequestClose?.Invoke(new DialogResult(ButtonResult.OK, paras));
+                    RequestClose?.Invoke(new DialogResult(ButtonResult.OK, paras));
+                }
+                else
+                {
+                    MyPwd = "";
+                }
             }
-            else
+            catch (Exception ex)
             {
+                // 记录并显示异常信息
+                _eventAggregator.GetEvent<MsgEvent>().Publish($"登录失败: {ex.Message}");
                 MyPwd = "";
             }
-
         }
-
         #endregion
 
         #region 注册
@@ -123,38 +133,35 @@ namespace WpfPrism.ViewModels
         //public DelegateCommand RegCmd { set; get; }
 
         [RelayCommand]
-        private void Reg()
+        private async Task Reg()
         {
-            //数据校验
-            if (string.IsNullOrEmpty(UsersReq.Name) || string.IsNullOrEmpty(UsersReq.Account) || string.IsNullOrEmpty(UsersReq.Password) || string.IsNullOrEmpty(UsersReq.ConfirmPwd))
+            try
             {
-                //发布消息
-                _eventAggregator.GetEvent<MsgEvent>().Publish("信息不全");
-                return;
+                //数据校验
+                if (string.IsNullOrEmpty(UsersReq.Name) || string.IsNullOrEmpty(UsersReq.Account) || string.IsNullOrEmpty(UsersReq.Password) || string.IsNullOrEmpty(UsersReq.ConfirmPwd))
+                {
+                    //发布消息
+                    _eventAggregator.GetEvent<MsgEvent>().Publish("信息不全");
+                    return;
+                }
+                if (UsersReq.Password != UsersReq.ConfirmPwd)
+                {
+                    _eventAggregator.GetEvent<MsgEvent>().Publish("两次密码输入不一致");
+                    return;
+                }
+
+                //调用Api
+                ApiResponse apiResponse = await _userServices.UserRegAsync(UsersReq);
+
+                _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
+                if (apiResponse.IsSuccess)
+                {
+                    SelectIndex = 0;
+                }
             }
-            if (UsersReq.Password != UsersReq.ConfirmPwd)
+            catch (Exception ex)
             {
-                _eventAggregator.GetEvent<MsgEvent>().Publish("两次密码输入不一致");
-                return;
-            }
-
-            //调用Api
-            ApiRequest apiRequest = new()
-            {
-                Method = RestSharp.Method.POST,
-                Route = "Users/Reg"
-            };
-
-            //对密码进行处理
-            UsersReq.Password = MD5Helper.GetMD5(UsersReq.Password);
-
-            apiRequest.Parameters = UsersReq;
-
-            ApiResponse apiResponse = _httpRestClient.Execute(apiRequest);
-            _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
-            if (apiResponse.IsSuccess)
-            {
-                SelectIndex = 0;
+                _eventAggregator.GetEvent<MsgEvent>().Publish($"注册失败: {ex.Message}");
             }
         }
 

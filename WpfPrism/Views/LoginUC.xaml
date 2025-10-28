@@ -28,9 +28,9 @@
         <md:Snackbar x:Name="RegLoginBar" Grid.ColumnSpan="2" MessageQueue="{md:MessageQueue}"></md:Snackbar>
 
         <Image Source="/Images/logo.png" Height="200" />
-        
+
         <md:Transitioner Grid.Column="1" SelectedIndex="{Binding SelectIndex,FallbackValue=0}">
-            <!--第一块 登录-->
+            <!--#region 第一块 登录 -->
             <md:TransitionerSlide>
                 <DockPanel Margin="15" VerticalAlignment="Center">
                     <TextBlock Text="欢迎使用" FontWeight="Bold" FontSize="22" Margin="0 10" DockPanel.Dock="Top"></TextBlock>
@@ -56,7 +56,8 @@
                     </DockPanel>
                 </DockPanel>
             </md:TransitionerSlide>
-            <!--第二块 注册-->
+            <!--#endregion-->
+            <!--#region 第二块 注册 -->
             <md:TransitionerSlide>
                 <DockPanel Margin="15" VerticalAlignment="Center">
                     <TextBlock Text="注册账号" FontWeight="Bold" DockPanel.Dock="Top" FontSize="22" Margin="0 10"/>
@@ -76,6 +77,7 @@
                     <Button Content="返回登录" DockPanel.Dock="Top" Margin="0 10" Style="{StaticResource MaterialDesignOutlinedButton}" Command="{Binding ChangedCommand}"></Button>
                 </DockPanel>
             </md:TransitionerSlide>
+            <!--#endregion-->
         </md:Transitioner>
     </Grid>
 </UserControl>
