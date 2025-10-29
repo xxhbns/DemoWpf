@@ -41,5 +41,10 @@ namespace Models.DTO
                 return Status == 0 ? "#1E90FF" : "#3CB371";
             } 
         }
+
+        /// <summary>
+        /// 用户名
+        /// </summary>
+        public string Account { get; set; }
     }
 }

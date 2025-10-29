@@ -13,6 +13,7 @@ using System.Text;
 using System.Threading.Tasks;
 using WpfPrism.Helpers;
 using WpfPrism.HttpClients;
+using WpfPrism.HttpClients.Interfaces;
 using WpfPrism.HttpClients.Services;
 using WpfPrism.Models;
 
@@ -33,13 +34,18 @@ namespace WpfPrism.ViewModels
         private readonly IEventAggregator _eventAggregator;
 
         /// <summary>
+        /// 登录用户信息管理
+        /// </summary>
+        private readonly ICurrentUserService _currentUserService;
+
+        /// <summary>
         /// 
         /// </summary>
         private readonly UserServices _userServices;
 
         public event Action<IDialogResult> RequestClose;
 
-        public LoginUCViewModel(IEventAggregator eventAggregator, UserServices userServices)
+        public LoginUCViewModel(IEventAggregator eventAggregator, UserServices userServices, ICurrentUserService currentUserService)
         {
             UsersReq = new UsersReq();
 
@@ -48,6 +54,7 @@ namespace WpfPrism.ViewModels
 
             _eventAggregator = eventAggregator;
             _userServices = userServices;
+            _currentUserService = currentUserService;
 
             //LoginCmd = new DelegateCommand(Login);
             //ChangedCmd = new DelegateCommand(Changed);
@@ -105,11 +112,18 @@ namespace WpfPrism.ViewModels
                 _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
                 if (apiResponse.IsSuccess)
                 {
-                    UsersReq usersReq = JsonConvert.DeserializeObject<UsersReq>(apiResponse.Parameter.ToString());
+                    var usersReq = JsonConvert.DeserializeObject<UsersReq>(apiResponse.Parameter.ToString());
                     DialogParameters paras = new()
-                {
-                    { "LoginName", usersReq.Name }
-                };
+                    {
+                        { "LoginName", usersReq.Name }
+                    };
+
+                    _currentUserService.SetUser(new UserInfo 
+                    {
+                        Name = usersReq.Name,
+                        Account = usersReq.Account,
+                    });
+
                     RequestClose?.Invoke(new DialogResult(ButtonResult.OK, paras));
                 }
                 else

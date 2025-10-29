@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using WpfPrism.Helpers;
 using WpfPrism.HttpClients;
+using WpfPrism.HttpClients.Interfaces;
 using WpfPrism.HttpClients.Services;
 using WpfPrism.Models;
 using WpfPrism.Services;
@@ -51,7 +52,20 @@ namespace WpfPrism.ViewModels
         /// </summary>
         private readonly IEventAggregator _eventAggregator;
 
-        public HomeUCViewModel(WaitServices waitServices, MemoServices memoServices, DialogHostService dialogHostService, IRegionManager regionManager, IEventAggregator eventAggregator)
+        /// <summary>
+        /// 登录用户信息管理
+        /// </summary>
+        private readonly ICurrentUserService _currentUserService;
+
+        public HomeUCViewModel
+            (
+                WaitServices waitServices, 
+                MemoServices memoServices, 
+                DialogHostService dialogHostService, 
+                IRegionManager regionManager, 
+                IEventAggregator eventAggregator, 
+                ICurrentUserService currentUserService
+            )
         {
             _waitServices = waitServices;
             _memoServices = memoServices;
@@ -59,11 +73,9 @@ namespace WpfPrism.ViewModels
             this.dialogHostService = dialogHostService;
             _regionManager = regionManager;
             _eventAggregator = eventAggregator;
+            _currentUserService = currentUserService;
 
             GetPanelList();
-            GetWaitInfoList();
-            GetMemoInfoList();
-            GetStatMemo();
         }
 
         #region 初始化时统计面板数据
@@ -116,9 +128,9 @@ namespace WpfPrism.ViewModels
         /// <summary>
         /// 待办事项面板统计
         /// </summary>
-        private void GetStatWait()
+        private async Task GetStatWait()
         {
-            ApiResponse apiResponse = _waitServices.GetStatWait();
+            ApiResponse apiResponse = await _waitServices.GetStatWait();
             if (apiResponse.IsSuccess)
             {
                 StatWait = JsonConvert.DeserializeObject<StatWaitDTO>(apiResponse.Parameter.ToString());
@@ -145,11 +157,11 @@ namespace WpfPrism.ViewModels
         /// <summary>
         /// 获取待办事项数据
         /// </summary>
-        private void GetWaitInfoList()
+        private async Task GetWaitInfoList()
         {
             WaitInfoList = [];
 
-            ApiResponse apiResponse = _waitServices.GetWaitInfoList();
+            ApiResponse apiResponse = await _waitServices.GetWaitInfoList();
             if (apiResponse.IsSuccess)
             {
                 WaitInfoList = JsonConvert.DeserializeObject<List<WaitInfoDTO>>(apiResponse.Parameter.ToString());
@@ -191,12 +203,12 @@ namespace WpfPrism.ViewModels
                 if (result.Parameters.TryGetValue<WaitInfoDTO>("NewWaitInfo", out var addModel))
                 {
                     //调用Api实现添加待办事项
-                    ApiResponse apiResponse = _waitServices.AddWaitInfo(addModel);
+                    ApiResponse apiResponse = await _waitServices.AddWaitInfo(addModel);
                     _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
                     if (apiResponse.IsSuccess)
                     {
                         WaitInfoList = JsonConvert.DeserializeObject<List<WaitInfoDTO>>(apiResponse.Parameter.ToString());
-                        GetStatWait();
+                        await GetStatWait();
                     }
                 }
             }
@@ -205,14 +217,14 @@ namespace WpfPrism.ViewModels
 
         #region 修改待办事项
         [RelayCommand]
-        private void UpdateWaitInfo(WaitInfoDTO waitInfoDTO)
+        private async Task UpdateWaitInfo(WaitInfoDTO waitInfoDTO)
         {
-            ApiResponse apiResponse = _waitServices.UpdateWaitInfo(waitInfoDTO);
+            ApiResponse apiResponse = await _waitServices.UpdateWaitInfo(waitInfoDTO);
 
             _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
             if (apiResponse.IsSuccess)
             {
-                GetStatWait();
+                await GetStatWait();
             }
         }
         #endregion
@@ -234,13 +246,13 @@ namespace WpfPrism.ViewModels
                 if (result.Parameters.TryGetValue<WaitInfoDTO>("NewWaitInfo", out var NewWaitModel))
                 {
                     //调用Api实现添加待办事项
-                    ApiResponse apiResponse = _waitServices.UpdateWaitInfo(NewWaitModel);
+                    ApiResponse apiResponse = await _waitServices.UpdateWaitInfo(NewWaitModel);
 
                     _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
                     if (apiResponse.IsSuccess)
                     {
                         WaitInfoList = JsonConvert.DeserializeObject<List<WaitInfoDTO>>(apiResponse.Parameter.ToString());
-                        GetStatWait();
+                        await GetStatWait();
                     }
                 }
             }
@@ -251,9 +263,9 @@ namespace WpfPrism.ViewModels
         /// <summary>
         /// 统计备忘录数据
         /// </summary>
-        private void GetStatMemo()
+        private async Task GetStatMemo()
         {
-            ApiResponse apiResponse = _memoServices.GetStatMemo();
+            ApiResponse apiResponse = await _memoServices.GetStatMemo();
 
             if (apiResponse.IsSuccess)
             {
@@ -273,11 +285,11 @@ namespace WpfPrism.ViewModels
         /// <summary>
         /// 获取备忘录数据
         /// </summary>
-        private void GetMemoInfoList()
+        private async Task GetMemoInfoList()
         {
             MemoInfoList = [];
 
-            ApiResponse apiResponse = _memoServices.GetMemoInfoList();
+            ApiResponse apiResponse = await _memoServices.GetMemoInfoList();
             if (apiResponse.IsSuccess)
             {
                 MemoInfoList = JsonConvert.DeserializeObject<List<MemoInfoDTO>>(apiResponse.Parameter.ToString());
@@ -308,12 +320,12 @@ namespace WpfPrism.ViewModels
                 if (result.Parameters.TryGetValue<MemoInfoDTO>("NewMemoInfo", out var addModel))
                 {
                     //调用Api实现添加待办事项
-                    ApiResponse apiResponse = _memoServices.AddMemoInfo(addModel);
+                    ApiResponse apiResponse = await _memoServices.AddMemoInfo(addModel);
                     _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
                     if (apiResponse.IsSuccess)
                     {
                         MemoInfoList = JsonConvert.DeserializeObject<List<MemoInfoDTO>>(apiResponse.Parameter.ToString());
-                        GetStatMemo();
+                        await GetStatMemo();
                     }
                 }
             }
@@ -342,7 +354,7 @@ namespace WpfPrism.ViewModels
                 if (result.Parameters.TryGetValue<MemoInfoDTO>("NewMemoInfo", out var NewMemoModel))
                 {
                     //调用Api实现添加待办事项
-                    ApiResponse apiResponse = _memoServices.UpdateMemoInfo(NewMemoModel);
+                    ApiResponse apiResponse = await _memoServices.UpdateMemoInfo(NewMemoModel);
                     _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
                     if (apiResponse.IsSuccess)
                     {
@@ -370,6 +382,13 @@ namespace WpfPrism.ViewModels
 
                 LoginInfo = $"您好！{loginName}。今天是 {dateTime.ToString("yyyy-MM-dd")} {weeks[(int)dateTime.DayOfWeek]}";
             }
+
+            _ = SafeExecuteHelper.SafeExecuteAsync(async () =>
+            {
+                await GetWaitInfoList();
+                await GetMemoInfoList();
+                await GetStatMemo();
+            });
         }
 
         /// <summary>

@@ -11,7 +11,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using WpfPrism.Helpers;
 using WpfPrism.HttpClients;
+using WpfPrism.HttpClients.Interfaces;
 using WpfPrism.HttpClients.Services;
 using WpfPrism.Models;
 
@@ -34,13 +36,19 @@ namespace WpfPrism.ViewModels
         /// </summary>
         private readonly MemoServices _memoServices;
 
-        public MemoUCViewModel(MemoServices memoServices, IEventAggregator eventAggregator)
+        /// <summary>
+        /// 登录用户信息管理
+        /// </summary>
+        private readonly ICurrentUserService _currentUserService;
+
+        public MemoUCViewModel(MemoServices memoServices, IEventAggregator eventAggregator, ICurrentUserService currentUserService)
         {
             _memoServices = memoServices;
             _eventAggregator = eventAggregator;
+            _currentUserService = currentUserService;
             //this.httpRestClient = httpRestClient;
 
-            QueryMemoInfoDTOList();
+            ErrorHidden = Visibility.Hidden;
         }
 
         #region 列表为空或出错时显示的界面控制
@@ -91,17 +99,17 @@ namespace WpfPrism.ViewModels
         private string _searchTitle;
 
         [RelayCommand]
-        private void SearchMemoInfos()
+        private async Task SearchMemoInfos()
         {
-            QueryMemoInfoDTOList();
+            await QueryMemoInfoDTOList();
         }
 
         /// <summary>
         /// 查询备忘录数据
         /// </summary>
-        private void QueryMemoInfoDTOList()
+        private async Task QueryMemoInfoDTOList()
         {
-            ApiResponse apiResponse = _memoServices.QueryMemoInfoDTOList(SearchTitle);
+            ApiResponse apiResponse = await _memoServices.QueryMemoInfoDTOList(SearchTitle);
             if (apiResponse.IsSuccess)
             {
                 MemoInfoDTOList = JsonConvert.DeserializeObject<List<MemoInfoDTO>>(apiResponse.Parameter.ToString());
@@ -122,20 +130,21 @@ namespace WpfPrism.ViewModels
         public MemoInfoDTO MemoInfoDTO { get; set; } = new MemoInfoDTO();
 
         [RelayCommand]
-        private void AddMemoInfo()
+        private async Task AddMemoInfo()
         {
             if (string.IsNullOrEmpty(MemoInfoDTO.Title) || string.IsNullOrEmpty(MemoInfoDTO.Contents))
             {
+                MessageBox.Show("标题和内容不能为空");
                 return;
             }
 
             //调用Api实现添加待办事项
-            ApiResponse apiResponse = _memoServices.AddMemoInfo(MemoInfoDTO);
+            ApiResponse apiResponse = await _memoServices.AddMemoInfo(MemoInfoDTO);
             _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
             if (apiResponse.IsSuccess)
             {
                 //MemoInfoDTOList = JsonConvert.DeserializeObject<List<MemoInfoDTO>>(apiResponse.Parameter.ToString());
-                QueryMemoInfoDTOList();
+                await QueryMemoInfoDTOList();
 
                 IsShowAddMemo = false;
             }
@@ -148,16 +157,16 @@ namespace WpfPrism.ViewModels
         /// </summary>
         /// <param name="memoInfoDTO"></param>
         [RelayCommand]
-        private void DeleteMemoInfo(MemoInfoDTO memoInfoDTO) 
+        private async Task DeleteMemoInfo(MemoInfoDTO memoInfoDTO) 
         {
             if (MessageBox.Show("确定删除此条备忘录？", "温馨提示", MessageBoxButton.OKCancel) == MessageBoxResult.OK) 
             {
                 //调用API
-                ApiResponse apiResponse = _memoServices.DeleteMemoInfo(memoInfoDTO);
+                ApiResponse apiResponse = await _memoServices.DeleteMemoInfo(memoInfoDTO);
                 _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
                 if (apiResponse.IsSuccess)
                 {
-                    QueryMemoInfoDTOList();
+                    await QueryMemoInfoDTOList();
                 }
             }
         }
@@ -166,8 +175,11 @@ namespace WpfPrism.ViewModels
         #region 区域导航
         public void OnNavigatedTo(NavigationContext navigationContext)
         {
-            //SearchTitle = "";
-            //QueryMemoInfoDTOList();
+            _ = SafeExecuteHelper.SafeExecuteAsync(async () =>
+            {
+                //SearchTitle = "";
+                await QueryMemoInfoDTOList();
+            });
         }
 
         public bool IsNavigationTarget(NavigationContext navigationContext)

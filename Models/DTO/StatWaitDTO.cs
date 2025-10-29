@@ -26,5 +26,9 @@ namespace Models.DTO
         /// </summary>
         public string FinishPercent { get; set; }
 
+        /// <summary>
+        /// 用户名
+        /// </summary>
+        public string Account { get; set; }
     }
 }

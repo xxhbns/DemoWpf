@@ -11,6 +11,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using WpfPrism.Helpers;
 using WpfPrism.HttpClients;
 using WpfPrism.HttpClients.Services;
 using WpfPrism.Models;
@@ -95,18 +96,18 @@ namespace WpfPrism.ViewModels
         /// 查询待办事项数据命令
         /// </summary>
         [RelayCommand]
-        private void SearchWaitInfoList() 
+        private async Task SearchWaitInfoList() 
         {
-            QueryWaitInfoDTOList();
+            await QueryWaitInfoDTOList();
         }
 
         /// <summary>
         /// 查询待办事项数据
         /// </summary>
-        private void QueryWaitInfoDTOList()
+        private async Task QueryWaitInfoDTOList()
         {
             //通过Api获取待办事项数据
-            ApiResponse apiResponse = _waitServices.QueryWaitInfoDTOList(SearchTitle, SearchIndex);
+            ApiResponse apiResponse = await _waitServices.QueryWaitInfoDTOList(SearchTitle, SearchIndex);
             if (apiResponse.IsSuccess) 
             {
                 WaitInfoDTOList = JsonConvert.DeserializeObject<List<WaitInfoDTO>>(apiResponse.Parameter.ToString());
@@ -138,7 +139,7 @@ namespace WpfPrism.ViewModels
         public WaitInfoDTO WaitInfoDTO { get; set; } = new WaitInfoDTO();
 
         [RelayCommand]
-        private void AddWaitInfo()
+        private async Task AddWaitInfo()
         {
             if (string.IsNullOrEmpty(WaitInfoDTO.Title) || string.IsNullOrEmpty(WaitInfoDTO.Contents))
             {
@@ -146,12 +147,12 @@ namespace WpfPrism.ViewModels
             }
 
             //调用Api实现添加待办事项
-            ApiResponse apiResponse = _waitServices.AddWaitInfo(WaitInfoDTO);
+            ApiResponse apiResponse = await _waitServices.AddWaitInfo(WaitInfoDTO);
             _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
             if (apiResponse.IsSuccess)
             {
                 //WaitInfoDTOList = JsonConvert.DeserializeObject<List<WaitInfoDTO>>(apiResponse.Parameter.ToString());
-                QueryWaitInfoDTOList();
+                await QueryWaitInfoDTOList();
                 IsShowAddWait = false;
             }
         }
@@ -163,16 +164,16 @@ namespace WpfPrism.ViewModels
         /// </summary>
         /// <param name="waitInfoDTO"></param>
         [RelayCommand]
-        private void DeleteWaitInfo(WaitInfoDTO waitInfoDTO)
+        private async Task DeleteWaitInfo(WaitInfoDTO waitInfoDTO)
         {
             if (MessageBox.Show("确定删除此条待办事项？", "温馨提示", MessageBoxButton.OKCancel) == MessageBoxResult.OK)
             {
                 //调用API
-                ApiResponse apiResponse = _waitServices.DeleteWaitInfo(waitInfoDTO);
+                ApiResponse apiResponse = await _waitServices.DeleteWaitInfo(waitInfoDTO);
                 _eventAggregator.GetEvent<MsgEvent>().Publish(apiResponse.Msg);
                 if (apiResponse.IsSuccess)
                 {
-                    QueryWaitInfoDTOList();
+                    await QueryWaitInfoDTOList();
                 }
             }
         }
@@ -181,14 +182,18 @@ namespace WpfPrism.ViewModels
         #region 区域导航
         public void OnNavigatedTo(NavigationContext navigationContext)
         {
-            if (navigationContext.Parameters.TryGetValue<int>("HomeTOToDo_SearchIndex", out var index)) 
+            _ = SafeExecuteHelper.SafeExecuteAsync(async () =>
             {
-                SearchIndex = index;
-            }
-            else 
-                SearchIndex = 2;
-            SearchTitle = "";
-            QueryWaitInfoDTOList();
+                if (navigationContext.Parameters.TryGetValue<int>("HomeTOToDo_SearchIndex", out var index))
+                {
+                    SearchIndex = index;
+                }
+                else
+                    SearchIndex = 2;
+                SearchTitle = "";
+
+                await QueryWaitInfoDTOList();
+            });
         }
 
         public bool IsNavigationTarget(NavigationContext navigationContext)

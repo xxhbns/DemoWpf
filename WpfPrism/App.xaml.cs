@@ -1,4 +1,5 @@
 ﻿using DryIoc;
+//using Microsoft.Extensions.DependencyInjection;
 using Prism.DryIoc;
 using Prism.Ioc;
 using Prism.Services.Dialogs;
@@ -6,6 +7,7 @@ using System.Configuration;
 using System.Data;
 using System.Windows;
 using WpfPrism.HttpClients;
+using WpfPrism.HttpClients.Interfaces;
 using WpfPrism.HttpClients.Services;
 using WpfPrism.Services;
 using WpfPrism.ViewModels;
@@ -71,12 +73,16 @@ namespace WpfPrism
             //自定义对话框服务
             containerRegistry.Register<DialogHostService>();
 
-            containerRegistry.Register<UserServices>();
-            containerRegistry.Register<WaitServices>();
-            containerRegistry.Register<MemoServices>();
-
             //请求
             containerRegistry.GetContainer().Register<HttpRestClient>(made: Parameters.Of.Type<string>(serviceKey: "webUrl"));
+
+
+            //var services = new ServiceCollection();
+
+            containerRegistry.RegisterSingleton<UserServices>();
+            containerRegistry.RegisterSingleton<WaitServices>();
+            containerRegistry.RegisterSingleton<MemoServices>();
+            containerRegistry.RegisterSingleton<ICurrentUserService, CurrentUserService>();
 
         }
 
