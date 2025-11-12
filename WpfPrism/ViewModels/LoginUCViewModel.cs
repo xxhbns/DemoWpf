@@ -1,11 +1,13 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
 using Models.DTO;
 using Newtonsoft.Json;
 using Prism.Commands;
 using Prism.Events;
 using Prism.Mvvm;
 using Prism.Services.Dialogs;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -39,13 +41,17 @@ namespace WpfPrism.ViewModels
         private readonly ICurrentUserService _currentUserService;
 
         /// <summary>
-        /// 
+        /// 用户 api 接口管理
         /// </summary>
         private readonly UserServices _userServices;
 
         public event Action<IDialogResult> RequestClose;
 
-        public LoginUCViewModel(IEventAggregator eventAggregator, UserServices userServices, ICurrentUserService currentUserService)
+        public LoginUCViewModel(
+            IEventAggregator eventAggregator, 
+            UserServices userServices, 
+            ICurrentUserService currentUserService
+            )
         {
             UsersReq = new UsersReq();
 
@@ -123,6 +129,8 @@ namespace WpfPrism.ViewModels
                         Name = usersReq.Name,
                         Account = usersReq.Account,
                     });
+
+                    Log.Information("用户登录成功！");
 
                     RequestClose?.Invoke(new DialogResult(ButtonResult.OK, paras));
                 }

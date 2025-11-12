@@ -132,7 +132,7 @@ namespace WpfPrism.HttpClients.Services
             ApiRequest apiRequest = new()
             {
                 Method = RestSharp.Method.DELETE,
-                Route = $"Wait/DelWaitList?waitId={waitInfoDTO.WaitId}&account={_currentUserService.Account}"
+                Route = $"Wait/DelWaitInfo?waitId={waitInfoDTO.WaitId}&account={_currentUserService.Account}"
             };
 
             ApiResponse apiResponse = await _httpRestClient.ExecuteAsync(apiRequest);

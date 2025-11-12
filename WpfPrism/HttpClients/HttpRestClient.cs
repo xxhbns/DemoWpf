@@ -11,7 +11,7 @@ namespace WpfPrism.HttpClients
 {
     public class HttpRestClient
     {
-        private readonly string baseUrl = "http://localhost:14761/api/";
+        private readonly string baseUrl = "http://localhost:81/api/";
 
         private readonly RestClient _restClient;
 

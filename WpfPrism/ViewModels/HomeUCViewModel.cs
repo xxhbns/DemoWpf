@@ -385,6 +385,7 @@ namespace WpfPrism.ViewModels
 
             _ = SafeExecuteHelper.SafeExecuteAsync(async () =>
             {
+                await GetStatWait();
                 await GetWaitInfoList();
                 await GetMemoInfoList();
                 await GetStatMemo();

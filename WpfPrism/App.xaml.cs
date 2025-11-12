@@ -1,8 +1,14 @@
 ﻿using DryIoc;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+
+
 //using Microsoft.Extensions.DependencyInjection;
 using Prism.DryIoc;
 using Prism.Ioc;
 using Prism.Services.Dialogs;
+using Serilog;
 using System.Configuration;
 using System.Data;
 using System.Windows;
@@ -83,6 +89,13 @@ namespace WpfPrism
             containerRegistry.RegisterSingleton<WaitServices>();
             containerRegistry.RegisterSingleton<MemoServices>();
             containerRegistry.RegisterSingleton<ICurrentUserService, CurrentUserService>();
+
+            // 配置 Serilog
+            Log.Logger = new LoggerConfiguration()
+                //.MinimumLevel.Debug() // 设置最小日志级别为Debug[citation:7]
+                .MinimumLevel.Information()
+                .WriteTo.File("logs/myapp.log", rollingInterval: RollingInterval.Day) // 日志按天滚动输出到文件[citation:4]
+                .CreateLogger();
 
         }
 
